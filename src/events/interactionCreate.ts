@@ -1,10 +1,12 @@
 import { Events } from 'discord.js';
 import { Interaction } from 'discord.js';
+import { ErrorMessage } from '../utils';
 
 module.exports = {
 	// Event name used for tracking which event this is for
 	reactsTo: Events.InteractionCreate,
 	async execute(interaction : Interaction) {
+		// All slash commands use this if statement
 		if (interaction.isChatInputCommand()){
 	
 			const command = interaction.client.commands.get(interaction.commandName);
@@ -25,9 +27,9 @@ module.exports = {
 			} catch (error) {
 				console.error(error);
 				if (interaction.replied || interaction.deferred) {
-					await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+					await interaction.editReply( new ErrorMessage(true) );
 				} else {
-					await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+					await interaction.reply( new ErrorMessage(true) );
 				}
 			}
 
