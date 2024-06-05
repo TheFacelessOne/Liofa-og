@@ -1,6 +1,6 @@
-import type { CommandInteraction, Message, MessageActionRowComponentBuilder } from "discord.js";
-import { QuickButton } from "../utils";
-import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, parseEmoji } from "discord.js";
+import type { CommandInteraction, Message } from "discord.js";
+import { ErrorMessage, QuickButton, TimeOutMessage } from "../utils";
+import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder } from "discord.js";
 
 
 
@@ -12,23 +12,39 @@ module.exports = {
 	ephemeral : true,
 	
 	async execute(interaction : CommandInteraction) {
-		let message = this.start(interaction);
-	},
-	async start(interaction : CommandInteraction) : Promise<Message<boolean>> {
-		const menu = new EmbedBuilder()
-			.setTitle('Welcome to the setup wizard!')
-			.addFields({ name: 'Are you ready to begin?', value: ' '});
+		
+		async function start(interaction : CommandInteraction) : Promise<Message<boolean>> {
+			const menu = new EmbedBuilder()
+				.setTitle('Welcome to the setup wizard!')
+				.addFields({ name: 'Are you ready to begin?', value: ' '});
 
-		const button1 = new QuickButton("tick", "green", "confirm");
+			const confirm = new QuickButton('tick', 'green', 'confirm');
+			const decline = new QuickButton('stop', 'red', 'decline');
 
-		const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button1)
+			const row = new ActionRowBuilder<ButtonBuilder>()
+				.addComponents(confirm)
+				.addComponents(decline);
 
-		const updatedMessage = await interaction.editReply({
-			content : " ", 
-			embeds : [menu],
-			components : [row],
-		})
-		return updatedMessage;
+			const updatedMessage = await interaction.editReply({
+				content : " ", 
+				embeds : [menu],
+				components : [row],
+			});
+			return updatedMessage;
+
+		}
+
+		let message = await start(interaction);
+		let confirmation;
+
+		try {
+			confirmation = await message.awaitMessageComponent({ filter: i => i.user.id === interaction.user.id, time: 60_000 });
+		} catch {
+			return new TimeOutMessage(interaction);
+		}
+
+		if (!confirmation.isButton()) { new ErrorMessage(interaction, 'A different interaction was expected')}
+
 
 	}
 }

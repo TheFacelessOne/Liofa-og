@@ -1,4 +1,4 @@
-import { Events, SlashCommandBuilder } from 'discord.js';
+import { Events } from 'discord.js';
 import { Interaction } from 'discord.js';
 import { ErrorMessage } from '../utils';
 
@@ -34,11 +34,7 @@ module.exports = {
 				command.execute(interaction);
 			} catch (error) {
 				console.error(error);
-				if (interaction.replied || interaction.deferred) {
-					await interaction.editReply( new ErrorMessage(true) );
-				} else {
-					await interaction.reply( new ErrorMessage(true) );
-				}
+				new ErrorMessage(interaction, 'Failed to execute command');
 			}
 
 		}
