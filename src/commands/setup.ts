@@ -1,4 +1,4 @@
-import type { CommandInteraction } from "discord.js";
+import type { CommandInteraction, Message, MessageActionRowComponentBuilder } from "discord.js";
 import { QuickButton } from "../utils";
 import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, parseEmoji } from "discord.js";
 
@@ -9,21 +9,26 @@ module.exports = {
 		.setName("setup")
 		.setDescription('Helps you modify settings for liofa')
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+	ephemeral : true,
+	
 	async execute(interaction : CommandInteraction) {
-
-		let menu = new EmbedBuilder()
+		let message = this.start(interaction);
+	},
+	async start(interaction : CommandInteraction) : Promise<Message<boolean>> {
+		const menu = new EmbedBuilder()
 			.setTitle('Welcome to the setup wizard!')
 			.addFields({ name: 'Are you ready to begin?', value: ' '});
 
-		const button1 = new QuickButton("tick", "green", "check");
+		const button1 = new QuickButton("tick", "green", "confirm");
 
-		const row : any = new ActionRowBuilder().addComponents(button1.component)
-		if (typeof row.data.type === 'undefined') throw ("Action row type undefined");
+		const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button1)
 
-		interaction.editReply({
+		const updatedMessage = await interaction.editReply({
 			content : " ", 
 			embeds : [menu],
 			components : [row],
 		})
+		return updatedMessage;
+
 	}
 }

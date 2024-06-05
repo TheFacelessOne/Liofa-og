@@ -2,6 +2,11 @@ import { Client, Collection, SlashCommandBuilder, CommandInteraction } from "dis
 
 declare module "discord.js" {
 	interface Client {
-		commands : Collection<String, { data : SlashCommandBuilder, async execute(CommandInteraction) : Promise<void>}>
+		commands : Collection<String, {
+			data : SlashCommandBuilder
+			async execute(CommandInteraction) : Promise<void>
+			ephemeral? : boolean
+		}>
 	}
 }
+
