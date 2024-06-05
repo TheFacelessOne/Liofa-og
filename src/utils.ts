@@ -1,20 +1,57 @@
 export {
 	ErrorMessage,
-	QuickButton
+	QuickButton,
+	TimeOutMessage
 };
 
-import { ButtonBuilder, ComponentEmojiResolvable } from "discord.js";
+import { ButtonBuilder, CacheType, CommandInteraction, ComponentEmojiResolvable, EmbedBuilder } from "discord.js";
 
 class ErrorMessage {
-	content = '☠️There was an error while executing this command!☠️';
-	ephemeral : boolean;
 
-	constructor(ephemeral? : boolean) {
-		this.ephemeral = ephemeral ? true : false;
+	constructor(interaction : CommandInteraction<CacheType>, errorCode : Number | String ) {
+
+		if (!interaction.isRepliable()) { throw("Error message failed, cannot reply to message error: " + errorCode) }
+
+		const errorResponse = new EmbedBuilder()
+			.setTitle('Error: ' + errorCode)
+			.setDescription('Uh oh! Something went wrong 🤡')
+			.setImage('https://i.pinimg.com/originals/42/d3/1e/42d31ed24169f20fd886338e025536c8.gif')
+			.setColor('Red');
+
+		if (interaction.replied || interaction.deferred) {
+			interaction.editReply({content : ' ', embeds : [errorResponse], components : []});
+		}
+		else {
+			interaction.reply({content : ' ', embeds : [errorResponse], components : []});
+		}
+
+
 	}
 }
 
-type acceptedEmojiStrings = "tick" | "cross" | "skull";
+class TimeOutMessage {
+
+	constructor(interaction : CommandInteraction<CacheType>) {
+
+		const timeoutResponse = new EmbedBuilder()
+			.setTitle('You timed out!')
+			.setDescription('You took too long to respond so I stopped listening')
+			.setImage('https://media2.giphy.com/media/xT5LMEMzdKTE2a6xfG/200w.gif?cid=6c09b952xqasvsrqldq9qjg1s3bi9fubomz8q8wdw5qqm8k1&ep=v1_gifs_search&rid=200w.gif&ct=g')
+			.setColor('Orange');
+		
+		if (!interaction.isRepliable()) { throw("Timeout message failed, cannot reply to message") }
+
+		if (interaction.replied || interaction.deferred) {
+			interaction.editReply({content : ' ', embeds : [timeoutResponse], components : []});
+		}
+		else {
+			interaction.reply({content : ' ', embeds : [timeoutResponse], components : []});
+		}
+	}
+
+}
+
+type acceptedEmojiStrings = "tick" | "cross" | "skull" | "stop";
 type acceptedColourStrings = "blue" | "grey" | "green" | "red";
 
 class QuickButton extends ButtonBuilder{
@@ -26,6 +63,8 @@ class QuickButton extends ButtonBuilder{
                 return "❌";
             case "skull":
                 return "☠️";
+			case "stop":
+				return "🛑";
             default:
                 throw new Error(`Invalid emoji: ${emoji}`);
         }
