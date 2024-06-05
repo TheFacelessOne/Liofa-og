@@ -1,0 +1,23 @@
+{
+  "name": "liofa-og",
+  "version": "0.0.1",
+  "description": "A discord bot for moderating languages",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch src/bot.ts",
+    "start": "node dist/bot.js",
+    "build": "tsup src/bot.ts --minify"
+  },
+  "author": "THE_FACELESS_ONE",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "discord.js": "^14.15.2",
+    "dotenv": "^16.4.5",
+    "mongodb": "^6.7.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5"
+  }
+}
