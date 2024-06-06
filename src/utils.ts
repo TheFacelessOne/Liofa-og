@@ -1,10 +1,12 @@
 export {
 	ErrorMessage,
 	QuickButton,
-	TimeOutMessage
+	TimeOutMessage,
+	BotInterface,
+	UIManager
 };
 
-import { ButtonBuilder, CacheType, CommandInteraction, ComponentEmojiResolvable, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, CacheType, CommandInteraction, ComponentEmojiResolvable, EmbedBuilder, Interaction, MessagePayload, StringSelectMenuBuilder } from "discord.js";
 
 class ErrorMessage {
 
@@ -81,4 +83,75 @@ class QuickButton extends ButtonBuilder{
 		this.setEmoji(QuickButton.buttonEmoji(emoji)).setCustomId(identifier).setStyle(QuickButton.style[colour]);
 	}
 
+}
+
+class BotInterface {
+	
+	content : string = ' '; 
+	embeds? : EmbedBuilder[];
+	components : ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[] = [];
+	functions : Record<string, Function> = {};
+	
+	getScreen() {
+
+		return {
+			content : this.content ? this.content : ' ',
+			embeds : this.embeds,
+			components : this.components
+		}
+	}
+
+	addContent(newContent : string) {
+		this.content = newContent;
+		return this;
+	}
+
+	addComponents(row : ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>) {
+		this.components.push(row);
+		return this;
+
+	}
+
+	addEmbed(embededContent : EmbedBuilder) {
+		this.embeds = [embededContent];
+		return this;
+
+	}
+
+	addFunction(name : string, newFunction : Function) {
+		this.functions[name] = newFunction;
+	}
+}
+
+async function UIManager( 
+	interaction : CommandInteraction,
+	screens : Record<string, BotInterface>,
+	startingScreen : keyof typeof screens, 
+	endingScreen? : keyof typeof screens
+) {	
+
+	let screen : string;
+
+	try {
+		do {
+			screen = startingScreen;
+			let ui = screens[screen].getScreen();
+			let message = await interaction.editReply(ui);
+			if (screen === endingScreen) return;
+			let interactionValue = await message.awaitMessageComponent({ filter : i => i.user.id === interaction.user.id, time : 60_000 });
+
+			// Move to a new screen when the customId starts with '>'
+			if (interactionValue.customId[0] === '>') {
+				interactionValue.reply(' ').then((i) => {return i.delete()})
+			}
+			
+			startingScreen = interactionValue.customId.substring(1);
+		} while (Object.keys(screens).includes(startingScreen));
+
+		return new ErrorMessage(interaction, 'Attempted to access incompatible screen');
+
+	} catch (error) {
+		console.log(error);
+		return new TimeOutMessage(interaction);
+	}
 }

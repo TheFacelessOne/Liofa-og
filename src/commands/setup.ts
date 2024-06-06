@@ -1,6 +1,6 @@
-import type { CommandInteraction, Message } from "discord.js";
-import { ErrorMessage, QuickButton, TimeOutMessage } from "../utils";
-import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder } from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { BotInterface, UIManager } from "../utils";
+import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder } from "discord.js";
 
 
 
@@ -12,39 +12,44 @@ module.exports = {
 	ephemeral : true,
 	
 	async execute(interaction : CommandInteraction) {
+
+		const menuSelect = new StringSelectMenuBuilder()
+			.setPlaceholder('Choose an option to edit')
+			.setCustomId('menu selector')
+			.addOptions( 
+				new StringSelectMenuOptionBuilder()
+				.setLabel('Reset')
+				.setDescription('Reset settings to default')
+				.setValue('>reset')
+				.setEmoji('⚠️')
+			)
 		
-		async function start(interaction : CommandInteraction) : Promise<Message<boolean>> {
-			const menu = new EmbedBuilder()
-				.setTitle('Welcome to the setup wizard!')
-				.addFields({ name: 'Are you ready to begin?', value: ' '});
+		const screens = {
 
-			const confirm = new QuickButton('tick', 'green', 'confirm');
-			const decline = new QuickButton('stop', 'red', 'decline');
+			close : 
+				new BotInterface()
+				.addEmbed(new EmbedBuilder()
+					.setTitle('Bye 👋')
+					.setImage('https://gifdb.com/images/high/bobby-hill-closing-door-slowly-4agdaxkuh78jqjah.gif')
+				),
 
-			const row = new ActionRowBuilder<ButtonBuilder>()
-				.addComponents(confirm)
-				.addComponents(decline);
-
-			const updatedMessage = await interaction.editReply({
-				content : " ", 
-				embeds : [menu],
-				components : [row],
-			});
-			return updatedMessage;
-
+			menu : 
+				new BotInterface()
+				.addContent(' ')
+				.addComponents( new ActionRowBuilder<StringSelectMenuBuilder>()
+					.addComponents(menuSelect))
+				.addComponents( new ActionRowBuilder<ButtonBuilder>()
+					.addComponents(new ButtonBuilder()
+						.setCustomId('>close')
+						.setLabel('❌Close Menu❌')
+						.setStyle(2)))
+				.addEmbed(new EmbedBuilder()
+					.setTitle('Welcome to the settings editor')
+					.setDescription('First timers: check out the "Setup Wizard" section')
+				),
 		}
 
-		let message = await start(interaction);
-		let confirmation;
+		UIManager(interaction, screens, 'menu', 'close')
 
-		try {
-			confirmation = await message.awaitMessageComponent({ filter: i => i.user.id === interaction.user.id, time: 60_000 });
-		} catch {
-			return new TimeOutMessage(interaction);
-		}
-
-		if (!confirmation.isButton()) { new ErrorMessage(interaction, 'A different interaction was expected')}
-
-
-	}
+	},
 }
