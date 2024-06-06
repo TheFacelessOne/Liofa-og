@@ -7,12 +7,13 @@ import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilde
 module.exports = {
 	data : new SlashCommandBuilder()
 		.setName("setup")
-		.setDescription('Helps you modify settings for liofa')
+		.setDescription('Modify settings for liofa')
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 	ephemeral : true,
 	
 	async execute(interaction : CommandInteraction) {
 
+		// Select menu for settings to edit
 		const menuSelect = new StringSelectMenuBuilder()
 			.setPlaceholder('Choose an option to edit')
 			.setCustomId('menu selector')
@@ -20,12 +21,12 @@ module.exports = {
 				new StringSelectMenuOptionBuilder()
 				.setLabel('Reset')
 				.setDescription('Reset settings to default')
-				.setValue('>reset')
+				.setValue('>reset') // moves to "reset" screen
 				.setEmoji('⚠️')
 			)
 		
+		// Possible user interfaces generated from this command
 		const screens = {
-
 			close : 
 				new BotInterface()
 				.addEmbed(new EmbedBuilder()
@@ -40,7 +41,7 @@ module.exports = {
 					.addComponents(menuSelect))
 				.addComponents( new ActionRowBuilder<ButtonBuilder>()
 					.addComponents(new ButtonBuilder()
-						.setCustomId('>close')
+						.setCustomId('>close') // Moves to "close" screen
 						.setLabel('❌Close Menu❌')
 						.setStyle(2)))
 				.addEmbed(new EmbedBuilder()
@@ -49,6 +50,7 @@ module.exports = {
 				),
 		}
 
+		// Starts the UI manager
 		UIManager(interaction, screens, 'menu', 'close')
 
 	},
