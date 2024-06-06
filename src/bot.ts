@@ -31,6 +31,7 @@ const commands: Commands[] = [];
 const commandFiles = fs.readdirSync('./src/commands').filter((file: string) => file.endsWith('.ts') || file.endsWith('.js'));
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`).default;
+	console.log(command);
     commands.push(command.data.toJSON());
 	client.commands.set(command.data.name, command);
 }
@@ -53,7 +54,7 @@ interface DiscordEvent {
 // Chooses which events to act on
 const eventFiles = fs.readdirSync('./src/events').filter((file: string) => file.endsWith('.ts') || file.endsWith('.js'));
 for (const file of eventFiles) {
-    const event : DiscordEvent = require(`./events/${file}`);
+    const event : DiscordEvent = require(`./events/${file}`).default;
 
     if (event.once) {
         client.once(event.reactsTo, (...args: any) => event.execute(...args));
