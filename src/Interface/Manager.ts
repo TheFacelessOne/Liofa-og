@@ -71,23 +71,26 @@ export async function UIManager(
 			// Waits for response from user
 			let interactionValue = await message.awaitMessageComponent({ filter : i => i.user.id === interaction.user.id, time : 60_000 });
 
+			// Prevents an interaction failure message sent to user
+			interactionValue.deferUpdate();
+
 			if (interactionValue.isStringSelectMenu()) {
 				interactionValue.customId = interactionValue.values[0];
 			}
 
-			// Move to a new screen when the customId starts with '>'
-			if (interactionValue.customId[0] === '>') {
-				// Prevents an interaction failure message sent to user
-				interactionValue.deferUpdate();
+			if(interactionValue.customId[0] === '!') {
+				// Removes '!' and runs function
+				const run = interactionValue.customId.substring(1);
+				interactionValue.customId = await screens[screen].functions[run]();
 			}
 
 			// Extract next screen from string
-			startingScreen = interactionValue.customId.substring(1);
+			startingScreen = interactionValue.customId
 
 			// Checks next screen is valid
 		} while (Object.keys(screens).includes(startingScreen));
 
-		return new ErrorMessage(interaction, 'Attempted to access incompatible screen');
+		return new ErrorMessage(interaction, 'Attempted to access incompatible screen ' + startingScreen);
 
 	} catch (error) {
 		return new TimeOutMessage(interaction);

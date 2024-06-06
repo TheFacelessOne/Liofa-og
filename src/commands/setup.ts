@@ -22,7 +22,7 @@ module.exports = {
 				new StringSelectMenuOptionBuilder()
 				.setLabel('Reset')
 				.setDescription('Reset settings to default')
-				.setValue('>reset') // moves to "reset" screen
+				.setValue('reset') // moves to "reset" screen
 				.setEmoji('⚠️')
 			))
 		
@@ -40,7 +40,7 @@ module.exports = {
 				.addComponents( menuSelectActionRow )
 				.addComponents( new ActionRowBuilder<ButtonBuilder>()
 					.addComponents(new ButtonBuilder()
-						.setCustomId('>close') // Moves to "close" screen
+						.setCustomId('close') // Moves to "close" screen
 						.setLabel('❌Close Menu❌')
 						.setStyle(2)))
 				.addEmbed(new EmbedBuilder()
@@ -54,7 +54,7 @@ module.exports = {
 				.addComponents(new ActionRowBuilder<ButtonBuilder>()
 					.addComponents(new ButtonBuilder()
 						.setStyle(ButtonStyle.Primary)
-						.setCustomId(">confirmReset")
+						.setCustomId("confirmReset")
 						.setLabel('Reset Settings')))
 				.addEmbed(new EmbedBuilder()
 				.setDescription("This will reset all your settings to the default values\n**Generally not recommended**")
@@ -71,11 +71,11 @@ module.exports = {
 				.addEmbed(new EmbedBuilder()
 				.setDescription("This will reset all your settings to the default values\n**Generally not recommended**")
 					.setTitle("Reset settings"))
-				.addFunction('resetSettings', () => {console.log('reset')})
+				.addFunction('resetSettings', () => {console.log('reseteroni'); return 'menu'})
 		}
 
 		// Starts the UI manager
-		UIManager(interaction, screens, 'menu', 'close')
+		UIManager(interaction, screens, 'menu', 'close');
 
 	},
 }
