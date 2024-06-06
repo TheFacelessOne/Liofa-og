@@ -1,7 +1,7 @@
 // Required modules
 import * as dotenv from 'dotenv';
 import fs from 'fs';
-import { Client, ClientEvents, Collection, Events, GatewayIntentBits, IntentsBitField, SlashCommandBuilder } from 'discord.js';
+import { Client, ClientEvents, Collection, GatewayIntentBits, IntentsBitField } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 dotenv.config();
@@ -28,7 +28,6 @@ for (const file of commandFiles) {
     commands.push(command.data.toJSON());
 	client.commands.set(command.data.name, command);
 }
-
 
 const rest = new REST({ version: '9' }).setToken(process.env.DEVTOKEN);
 
