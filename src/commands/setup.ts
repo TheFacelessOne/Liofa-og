@@ -1,6 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { BotInterface, UIManager } from "../Interface/Manager";
+import { BotInterface, UIManager } from "../interface/manager";
 
 
 
@@ -71,9 +71,8 @@ export default {
 				.addEmbed(new EmbedBuilder()
 				.setDescription("This will reset all your settings to the default values\n**Generally not recommended**")
 					.setTitle("Reset settings"))
-				.addFunction('resetSettings', () => {console.log('reseteroni'); return 'menu'})
+				.addFunction('resetSettings', () => {return 'menu'})
 		}
-
 		// Starts the UI manager
 		UIManager(interaction, screens, 'menu', 'close');
 

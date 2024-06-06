@@ -1,7 +1,7 @@
 // Class for user interfaces
 
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, CommandInteraction, Message } from "discord.js";
-import { ErrorMessage, TimeOutMessage } from "./Messages";
+import { ErrorMessage, TimeOutMessage } from "./messages";
 
 // Designed to be used as interaction replies with ActionRowElements
 export class BotInterface {
