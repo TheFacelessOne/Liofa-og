@@ -2,7 +2,7 @@ import { Events } from 'discord.js';
 import { Interaction } from 'discord.js';
 import { ErrorMessage } from '../Interface/Messages';
 
-module.exports = {
+export default {
 	// Event name used for tracking which event this is for
 	reactsTo: Events.InteractionCreate,
 

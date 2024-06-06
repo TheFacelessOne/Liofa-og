@@ -1,7 +1,7 @@
 // Required modules
 import * as dotenv from 'dotenv';
 import fs from 'fs';
-import { Client, ClientEvents, Collection, GatewayIntentBits, IntentsBitField } from 'discord.js';
+import { Client, ClientEvents, Collection, GatewayIntentBits, IntentsBitField, SlashCommandBuilder } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 dotenv.config();
@@ -20,16 +20,29 @@ myIntents.add(
 const client = new Client({ intents: myIntents });
 client.commands = new Collection;
 
+type Commands = {
+	data : SlashCommandBuilder
+	execute : Function
+	ephemeral? : boolean
+}
+
 // Registers Commands
-const commands: any[] = [];
-const commandFiles = fs.readdirSync('./src/commands').filter((file: string) => file.endsWith('.ts'));
+const commands: Commands[] = [];
+const commandFiles = fs.readdirSync('./src/commands').filter((file: string) => file.endsWith('.ts') || file.endsWith('.js'));
 for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
+    const command = require(`./commands/${file}`).default;
     commands.push(command.data.toJSON());
 	client.commands.set(command.data.name, command);
 }
 
-const rest = new REST({ version: '9' }).setToken(process.env.DEVTOKEN);
+if (typeof process.env.DEVTOKEN === 'undefined' || typeof process.env.DEVCLIENTID === 'undefined') {
+	throw('TOKEN or CLIENTID is undefined');
+}
+const token = process.env.DEVTOKEN;
+const clientID = process.env.DEVCLIENTID;
+
+
+const rest = new REST({ version: '9' }).setToken(token);
 
 interface DiscordEvent {
 	reactsTo : keyof ClientEvents,
@@ -38,7 +51,7 @@ interface DiscordEvent {
 }
 
 // Chooses which events to act on
-const eventFiles = fs.readdirSync('./src/events').filter((file: string) => file.endsWith('.ts'));
+const eventFiles = fs.readdirSync('./src/events').filter((file: string) => file.endsWith('.ts') || file.endsWith('.js'));
 for (const file of eventFiles) {
     const event : DiscordEvent = require(`./events/${file}`);
 
@@ -50,7 +63,7 @@ for (const file of eventFiles) {
 }
 
 console.group('Liofa\'s alarm is ringing');
-client.login(process.env.DEVTOKEN).then(() => {
+client.login(token).then(() => {
 
 	if (!client.user) throw new Error("user is null");
     console.log('Logged in as', client.user.tag);
@@ -74,7 +87,7 @@ client.login(process.env.DEVTOKEN).then(() => {
 		for (const guildId of guildIds) {
 			try {	
 				await rest.put(
-					Routes.applicationGuildCommands(process.env.DEVCLIENTID, guildId),
+					Routes.applicationGuildCommands(clientID, guildId),
 					{ body: commands },
 				);
 			} catch (error) {

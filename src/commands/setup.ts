@@ -4,7 +4,7 @@ import { BotInterface, UIManager } from "../Interface/Manager";
 
 
 
-module.exports = {
+export default {
 	data : new SlashCommandBuilder()
 		.setName("setup")
 		.setDescription('Modify settings for liofa')
