@@ -1,6 +1,6 @@
 import { Events } from 'discord.js';
 import { Interaction } from 'discord.js';
-import { ErrorMessage } from '../utils';
+import { ErrorMessage } from '../Interface/Messages';
 
 module.exports = {
 	// Event name used for tracking which event this is for

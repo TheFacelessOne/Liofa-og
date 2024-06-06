@@ -1,6 +1,6 @@
 import type { CommandInteraction } from "discord.js";
-import { BotInterface, UIManager } from "../utils";
-import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder } from "discord.js";
+import { PermissionFlagsBits, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { BotInterface, UIManager } from "../Interface/Manager";
 
 
 
@@ -11,19 +11,20 @@ module.exports = {
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 	ephemeral : true,
 	
-	async execute(interaction : CommandInteraction) {
+	execute(interaction : CommandInteraction) {
 
 		// Select menu for settings to edit
-		const menuSelect = new StringSelectMenuBuilder()
+		const menuSelectActionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
+		.addComponents(new StringSelectMenuBuilder()
 			.setPlaceholder('Choose an option to edit')
-			.setCustomId('menu selector')
+			.setCustomId('?menu selector')
 			.addOptions( 
 				new StringSelectMenuOptionBuilder()
 				.setLabel('Reset')
 				.setDescription('Reset settings to default')
 				.setValue('>reset') // moves to "reset" screen
 				.setEmoji('⚠️')
-			)
+			))
 		
 		// Possible user interfaces generated from this command
 		const screens = {
@@ -36,9 +37,7 @@ module.exports = {
 
 			menu : 
 				new BotInterface()
-				.addContent(' ')
-				.addComponents( new ActionRowBuilder<StringSelectMenuBuilder>()
-					.addComponents(menuSelect))
+				.addComponents( menuSelectActionRow )
 				.addComponents( new ActionRowBuilder<ButtonBuilder>()
 					.addComponents(new ButtonBuilder()
 						.setCustomId('>close') // Moves to "close" screen
@@ -48,6 +47,31 @@ module.exports = {
 					.setTitle('Welcome to the settings editor')
 					.setDescription('First timers: check out the "Setup Wizard" section')
 				),
+			reset :
+				new BotInterface()
+				.addContent(' ')
+				.addComponents( menuSelectActionRow )
+				.addComponents(new ActionRowBuilder<ButtonBuilder>()
+					.addComponents(new ButtonBuilder()
+						.setStyle(ButtonStyle.Primary)
+						.setCustomId(">confirmReset")
+						.setLabel('Reset Settings')))
+				.addEmbed(new EmbedBuilder()
+				.setDescription("This will reset all your settings to the default values\n**Generally not recommended**")
+				.setTitle("Reset settings")),
+
+			confirmReset :
+				new BotInterface()
+				.addComponents( menuSelectActionRow )
+				.addComponents(new ActionRowBuilder<ButtonBuilder>()
+					.addComponents(new ButtonBuilder()
+						.setStyle(ButtonStyle.Primary)
+						.setCustomId("!resetSettings")
+						.setLabel('Confirm')))
+				.addEmbed(new EmbedBuilder()
+				.setDescription("This will reset all your settings to the default values\n**Generally not recommended**")
+					.setTitle("Reset settings"))
+				.addFunction('resetSettings', () => {console.log('reset')})
 		}
 
 		// Starts the UI manager

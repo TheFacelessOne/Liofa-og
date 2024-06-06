@@ -1,12 +1,10 @@
 export {
 	ErrorMessage,
 	QuickButton,
-	TimeOutMessage,
-	BotInterface,
-	UIManager
+	TimeOutMessage
 };
 
-import { ActionRowBuilder, ButtonBuilder, CacheType, CommandInteraction, ComponentEmojiResolvable, EmbedBuilder, StringSelectMenuBuilder } from "discord.js";
+import { ButtonBuilder, CacheType, CommandInteraction, ComponentEmojiResolvable, EmbedBuilder } from "discord.js";
 
 // Creates an error message for the user
 class ErrorMessage {
@@ -89,93 +87,4 @@ class QuickButton extends ButtonBuilder{
 		this.setEmoji(QuickButton.buttonEmoji(emoji)).setCustomId(identifier).setStyle(QuickButton.style[colour]);
 	}
 
-}
-
-// Class for user interfaces
-// Designed to be used as interaction replies with ActionRowElements
-class BotInterface {
-	
-	content : string = ' '; 
-	embeds? : EmbedBuilder[];
-	components : ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[] = [];
-	functions : Record<string, Function> = {};
-	
-	// Generates interface to be sent as a message
-	render() {
-		return {
-			content : this.content ? this.content : ' ',
-			embeds : this.embeds,
-			components : this.components
-		}
-	}
-
-	addContent(newContent : string) {
-		this.content = newContent;
-		return this;
-	}
-
-	addComponents(row : ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>) {
-		this.components.push(row);
-		return this;
-
-	}
-
-	addEmbed(embededContent : EmbedBuilder) {
-		this.embeds = [embededContent];
-		return this;
-
-	}
-
-	// To be used for interface elements that do not require changing screens but do require something to happen
-	addFunction(name : string, newFunction : Function) {
-		this.functions[name] = newFunction;
-	}
-}
-
-// Once called, it will handle all interactions from that interface
-async function UIManager(
-	// Interaction that generated the UI
-	interaction : CommandInteraction,
-
-	// All possible screens from this interface
-	screens : Record<string, BotInterface>,
-
-	// The first and last screens to show
-	startingScreen : keyof typeof screens, 
-	endingScreen? : keyof typeof screens
-) {	
-
-	let screen : string;
-
-	try {
-		do {
-			// Loads in screen and sends it as a message
-			screen = startingScreen;
-			let ui = screens[screen].render();
-			let message = await interaction.editReply(ui);
-			if (screen === endingScreen) return;
-
-			// Waits for response from user
-			let interactionValue = await message.awaitMessageComponent({ filter : i => i.user.id === interaction.user.id, time : 60_000 });
-
-			// Move to a new screen when the customId starts with '>'
-			if (interactionValue.customId[0] === '>') {
-
-				// Responds and immediatley deletes message
-				// Prevents an interaction failure message sent to user
-				interactionValue.reply(' ').then((i) => {return i.delete()})
-
-				// Extract next screen from string
-				startingScreen = interactionValue.customId.substring(1);
-			}
-
-			// Checks next screen is valid
-		} while (Object.keys(screens).includes(startingScreen));
-
-		return new ErrorMessage(interaction, 'Attempted to access incompatible screen');
-
-	} catch (error) {
-		console.log(error);
-		return new TimeOutMessage(interaction);
-	}
 }
