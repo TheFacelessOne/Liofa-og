@@ -4,6 +4,7 @@ import fs from 'fs';
 import { Client, ClientEvents, Collection, GatewayIntentBits, IntentsBitField, SlashCommandBuilder } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
+import { addGuildDB } from './database';
 dotenv.config();
 
 // What permissions the bot needs
@@ -31,7 +32,6 @@ const commands: Commands[] = [];
 const commandFiles = fs.readdirSync('./src/commands').filter((file: string) => file.endsWith('.ts') || file.endsWith('.js'));
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`).default;
-	console.log(command);
     commands.push(command.data.toJSON());
 	client.commands.set(command.data.name, command);
 }
@@ -86,7 +86,8 @@ client.login(token).then(() => {
 	async function registerCommandsForGuilds(guildIds: string[]) {
 		if (!client.user) throw new Error("user is null");
 		for (const guildId of guildIds) {
-			try {	
+			try {
+				addGuildDB(guildId, false);
 				await rest.put(
 					Routes.applicationGuildCommands(clientID, guildId),
 					{ body: commands },
