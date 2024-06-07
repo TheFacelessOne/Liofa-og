@@ -1,5 +1,4 @@
 // Class for user interfaces
-
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, CommandInteraction, Message } from "discord.js";
 import { ErrorMessage, TimeOutMessage } from "./messages";
 
@@ -36,12 +35,6 @@ export class BotInterface {
 		return this;
 
 	}
-
-	// To be used for interface elements that do not require changing screens but do require something to happen
-	addFunction(name : string, newFunction : Function) {
-		this.functions[name] = newFunction;
-		return this;
-	}
 }
 
 // Once called, it will handle all interactions from that interface
@@ -51,6 +44,7 @@ export async function UIManager(
 
 	// All possible screens from this interface
 	screens : Record<string, BotInterface>,
+	scripts : Record<string, Function>,
 
 	// The first and last screens to show
 	startingScreen : keyof typeof screens, 
@@ -69,23 +63,33 @@ export async function UIManager(
 			if (screen === endingScreen) return;
 
 			// Waits for response from user
-			let interactionValue = await message.awaitMessageComponent({ filter : i => i.user.id === interaction.user.id, time : 60_000 });
+			let interactionResponse = await message.awaitMessageComponent({ filter : i => i.user.id === interaction.user.id, time : 60_000 });
 
 			// Prevents an interaction failure message sent to user
-			interactionValue.deferUpdate();
+			interactionResponse.deferUpdate();
 
-			if (interactionValue.isStringSelectMenu()) {
-				interactionValue.customId = interactionValue.values[0];
+			// Correctly assigns input value from selectMenus and buttons
+			let interactionScriptRef : string;
+			if (interactionResponse.isStringSelectMenu()) {
+				interactionScriptRef = interactionResponse.values[0]
+			}
+			else {
+				interactionScriptRef = interactionResponse.customId
 			}
 
-			if(interactionValue.customId[0] === '!') {
-				// Removes '!' and runs function
-				const run = interactionValue.customId.substring(1);
-				interactionValue.customId = await screens[screen].functions[run]();
+			// If there's no script by the given name
+			// Takes you to the screen by that name instead
+			console.log(' ');
+			if (typeof scripts[interactionScriptRef] === 'undefined') {
+				startingScreen = interactionScriptRef;
+				continue;
 			}
 
-			// Extract next screen from string
-			startingScreen = interactionValue.customId
+			// Runs the script if there is one
+			const interactionScript = scripts[interactionScriptRef];
+			console.log(interactionScriptRef, interactionScript)
+			interactionResponse.customId = interactionScript(interaction);
+			startingScreen = interactionResponse.customId
 
 			// Checks next screen is valid
 		} while (Object.keys(screens).includes(startingScreen));
@@ -93,6 +97,7 @@ export async function UIManager(
 		return new ErrorMessage(interaction, 'Attempted to access incompatible screen ' + startingScreen);
 
 	} catch (error) {
+		console.error(error);
 		return new TimeOutMessage(interaction);
 	}
 }
