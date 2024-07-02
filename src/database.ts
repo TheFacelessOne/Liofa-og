@@ -12,7 +12,7 @@ async function main() {
     const client = new MongoClient(uri);
     try {
         await client.connect();
-        console.log("💾 Connected successfully to MONGO");
+        console.group("💾 Connected successfully to MONGO");
         // Perform operations on the collection here
     } catch (e) {
         console.error(e);
@@ -38,9 +38,11 @@ const settingsTemplate = <Promise<GuildDBEntry>><unknown> client.db(process.env.
     .collection('Templates').findOne({name : 'settings'})
     .then((template) => {
         console.log('📃 Settings template received');
+        console.groupEnd();
         return template;
     }
 )
+
 
 export async function addGuildDB( guildRef : Guild["id"], overwrite? : boolean ) {
     try {
