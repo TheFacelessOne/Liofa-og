@@ -63,11 +63,11 @@ for (const file of eventFiles) {
     }
 }
 
-console.group('Liofa\'s alarm is ringing');
+console.group('⏰ Liofa\'s alarm is ringing');
 client.login(token).then(() => {
 
 	if (!client.user) throw new Error("user is null");
-    console.log('Logged in as', client.user.tag);
+    console.log('🔑 Logged in as', client.user.tag);
 
     // Retrieve the list of guilds your bot is a part of
     const guilds = client.guilds.cache;
@@ -77,7 +77,7 @@ client.login(token).then(() => {
 
     // Register commands for each guild
     registerCommandsForGuilds(guildIds).then(() => {
-        console.log('Commands successfully registered for all guilds.');
+        console.log('✅ Commands successfully registered for all guilds.');
 		console.groupEnd();
     }).catch(console.error);
 
@@ -93,7 +93,7 @@ client.login(token).then(() => {
 					{ body: commands },
 				);
 			} catch (error) {
-				console.error(`Failed to register commands for guild ${guildId}:`, error);
+				console.error(`❌ Failed to register commands for guild ${guildId}:`, error);
 			}
 		}
 	}

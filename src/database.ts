@@ -12,7 +12,7 @@ async function main() {
     const client = new MongoClient(uri);
     try {
         await client.connect();
-        console.log("Connected successfully to MONGO 💾💾💾");
+        console.log("💾 Connected successfully to MONGO");
         // Perform operations on the collection here
     } catch (e) {
         console.error(e);
@@ -37,7 +37,7 @@ const Guilds = client.db(process.env.LIOFADB).collection('Guilds');
 const settingsTemplate = <Promise<GuildDBEntry>><unknown> client.db(process.env.LIOFADB)
     .collection('Templates').findOne({name : 'settings'})
     .then((template) => {
-        console.log('Settings template received');
+        console.log('📃 Settings template received');
         return template;
     }
 )

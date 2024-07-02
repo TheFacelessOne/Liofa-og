@@ -14,7 +14,7 @@ export default {
 			const command = interaction.client.commands.get(interaction.commandName)
 	
 			if (interaction.guild === null) {
-				console.error(`An chat input was generated from a server that doesn't exist\nCommand: \t${interaction.commandName}\nUser: \t${interaction.user.id} \t${interaction.user.username}`);
+				console.error(`A chat input was generated from a server that doesn't exist\nCommand: \t${interaction.commandName}\nUser: \t${interaction.user.id} \t${interaction.user.username}`);
 				return;
 			}
 	
