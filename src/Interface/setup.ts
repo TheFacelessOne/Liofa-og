@@ -8,8 +8,9 @@ import {
 	StringSelectMenuInteraction, 
 	StringSelectMenuOptionBuilder
 } from "discord.js";
-import { BotInterface } from "./manager";
+import { BotInterface, UIManager } from "./manager";
 import { addGuildDB, getActiveStatus, toggleActivity } from "../database";
+import * as setupWiz from "./setupWizard";
 
 
 
@@ -17,18 +18,23 @@ import { addGuildDB, getActiveStatus, toggleActivity } from "../database";
 const menuSelectActionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
 .addComponents(new StringSelectMenuBuilder()
 	.setPlaceholder('Choose a setting to edit')
-	.setCustomId('?menu selector')
-	.addOptions( 
+	.setCustomId('menu selector')
+	.addOptions(
 		new StringSelectMenuOptionBuilder()
-		.setLabel('Toggle Liofa') // TODO: change label / description / emoji based on liofa's status
-		.setDescription('Turn liofa off or on')
-		.setValue( 'toggleMenu' ) // TODO make toggle page
-		.setEmoji('⚡'),
+			.setLabel('Setup Wizard')
+			.setDescription('Walks you through setting up Liofa')
+			.setValue('setupWizard')
+			.setEmoji('🧙‍♂️'),
 		new StringSelectMenuOptionBuilder()
-		.setLabel('Reset')
-		.setDescription('Reset settings to default')
-		.setValue( 'reset' )
-		.setEmoji('⚠️'),
+			.setLabel('Toggle Liofa') // TODO: change label / description / emoji based on liofa's status
+			.setDescription('Turn liofa off or on')
+			.setValue( 'toggleMenu' ) // TODO make toggle page
+			.setEmoji('⚡'),
+		new StringSelectMenuOptionBuilder()
+			.setLabel('Reset')
+			.setDescription('Reset settings to default')
+			.setValue( 'reset' )
+			.setEmoji('⚠️'),
 	)
 );
 
@@ -77,7 +83,7 @@ export const botInterfaces = {
 			.addComponents(new ButtonBuilder()
 				.setStyle(ButtonStyle.Primary)
 				.setCustomId("menu")
-				.setLabel('Cancel')))
+				.setLabel('Back')))
 		.addComponents( closeButtonActionRow )
 		.addEmbed(new EmbedBuilder()
 		.setDescription("This will reset all your settings to the default values\n**Generally not recommended**")
@@ -121,7 +127,11 @@ export const botInterfaces = {
 			.addComponents( new ButtonBuilder()
 				.setStyle(ButtonStyle.Danger)
 				.setEmoji('😴')
-				.setCustomId('toggleIt')
+				.setCustomId('toggleIt'),
+			new ButtonBuilder()
+				.setStyle(ButtonStyle.Primary)
+				.setCustomId("menu")
+				.setLabel('Back')
 			)
 		)
 		.addComponents(closeButtonActionRow)
@@ -135,7 +145,11 @@ export const botInterfaces = {
 			.addComponents( new ButtonBuilder()
 				.setStyle(ButtonStyle.Success)
 				.setEmoji('🔔')
-				.setCustomId('toggleIt')
+				.setCustomId('toggleIt'),
+			new ButtonBuilder()
+				.setStyle(ButtonStyle.Primary)
+				.setCustomId("menu")
+				.setLabel('Back')
 			)
 		)
 		.addComponents(closeButtonActionRow)
@@ -143,6 +157,27 @@ export const botInterfaces = {
 			.setTitle('Liofa is currently Turned off')
 			.setDescription('Hit the 🔔 button to turn on liofa')
 		)
-		.addFunction('toggleIt', toggleSwitch)
+		.addFunction('toggleIt', toggleSwitch),
+	
+	setupWizard : new BotInterface()
+		.addEmbed( new EmbedBuilder()
+			.setTitle('Let\'s get started!')
+			.setDescription('This will walk you through all the basic settings in Liofa for you to get the bot up and running.\n\nClick the start button to get started.'))
+		.addComponents(new ActionRowBuilder<ButtonBuilder>()
+			.addComponents( 
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Success)
+					.setCustomId('setupWizStart')
+					.setLabel('Start'),
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Primary)
+					.setCustomId("menu")
+					.setLabel('Back')
+				))
+		.addComponents(closeButtonActionRow)
+		.addFunction('setupWizStart', async (interaction : ButtonInteraction) => {
+			await UIManager(interaction, setupWiz.botInterfaces, 'start', 'end');
+			return 'setupWizard';
+		})
 
 }

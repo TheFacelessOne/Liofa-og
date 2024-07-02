@@ -1,5 +1,5 @@
 // Class for user interfaces
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, CommandInteraction, Message } from "discord.js";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, CommandInteraction, Message, ButtonInteraction } from "discord.js";
 import { ErrorMessage, TimeOutMessage } from "./messages";
 
 // Designed to be used as interaction replies with ActionRowElements
@@ -49,29 +49,38 @@ export class BotInterface {
 // Once called, it will handle all interactions from that interface
 export async function UIManager(
 	// Interaction that generated the UI
-	interaction : CommandInteraction,
+	interaction : CommandInteraction | ButtonInteraction,
 
 	// All possible screens from this interface
 	screens : Record<string, BotInterface>,
 
 	// The first and last screens to show
-	startingScreen : keyof typeof screens, 
+	startingScreen : keyof typeof screens | false, 
 	endingScreen? : keyof typeof screens
 ) {	
 
-	let screen : string | undefined;
+	let screen : string | false;
 	let message : Message<boolean>;
 
 	try {
 		do {
 			// Loads in screen and sends it as a message
 			screen = startingScreen;
+			if (screen === false) break;
+
 			let ui = screens[screen].render();
 			message = await interaction.editReply(ui);
 			if (screen === endingScreen) return;
 
 			// Waits for response from user
-			let interactionResponse = await message.awaitMessageComponent({ filter : i => i.user.id === interaction.user.id, time : 90_000 });
+			let interactionResponse = await message.awaitMessageComponent(
+				{ filter : i => i.user.id === interaction.user.id, time : 90_000 }
+			).catch(() => {
+				new TimeOutMessage(interaction)
+				return null;
+			});
+
+			if(interactionResponse === null) return;
 
 			// Prevents an interaction failure message sent to user
 			interactionResponse.deferUpdate();
@@ -87,9 +96,15 @@ export async function UIManager(
 
 			// If there's a script by the given name associated with the current screen
 			if (typeof screens[screen].functions[interactionScriptRef] != 'undefined') {
+
+				console.log('running script: ' + interactionScriptRef + 'from screen: ' + screen)
 				
 				// runs the script
-				startingScreen = screens[screen].functions[interactionScriptRef](interaction);
+				// if it returns false, it will not change the screen and will end this UIManager instance
+				// this allows nested UIManager instances starting and ending from scripts
+				startingScreen = await screens[screen].functions[interactionScriptRef](interaction);
+
+				if(startingScreen === false) return;
 				continue;
 			}
 				
@@ -102,6 +117,6 @@ export async function UIManager(
 
 	} catch (error) {
 		console.error(error);
-		return new TimeOutMessage(interaction);
+		return;
 	}
 }
