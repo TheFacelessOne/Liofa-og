@@ -99,5 +99,3 @@ client.login(token).then(() => {
 	}
 
 }).catch(console.error);
-
-
