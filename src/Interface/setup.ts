@@ -1,6 +1,15 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
+import { 
+	ActionRowBuilder, 
+	ButtonBuilder, 
+	ButtonInteraction, 
+	ButtonStyle, 
+	EmbedBuilder, 
+	StringSelectMenuBuilder, 
+	StringSelectMenuInteraction, 
+	StringSelectMenuOptionBuilder
+} from "discord.js";
 import { BotInterface } from "./manager";
-import { addGuildDB } from "../database";
+import { addGuildDB, getActiveStatus, toggleActivity } from "../database";
 
 
 
@@ -11,23 +20,32 @@ const menuSelectActionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
 	.setCustomId('?menu selector')
 	.addOptions( 
 		new StringSelectMenuOptionBuilder()
+		.setLabel('Toggle Liofa') // TODO: change label / description / emoji based on liofa's status
+		.setDescription('Turn liofa off or on')
+		.setValue( 'toggleMenu' ) // TODO make toggle page
+		.setEmoji('⚡'),
+		new StringSelectMenuOptionBuilder()
 		.setLabel('Reset')
 		.setDescription('Reset settings to default')
 		.setValue( 'reset' )
 		.setEmoji('⚠️'),
-		new StringSelectMenuOptionBuilder()
-		.setLabel('Toggle Liofa') // TODO: change label / description / emoji based on liofa's status
-		.setDescription('Reset settings to default')
-		.setValue( 'toggle' ) // TODO make toggle page
-		.setEmoji('⚠️'),
 	)
 );
 
+// Close button for menu
 const closeButtonActionRow = new ActionRowBuilder<ButtonBuilder>()
 .addComponents(new ButtonBuilder()
 	.setCustomId('close')
 	.setLabel('Exit')
-	.setStyle(ButtonStyle.Danger))
+	.setStyle(ButtonStyle.Danger)
+)
+
+const toggleSwitch = async (interaction : ButtonInteraction) => {
+	if (interaction.guildId == null) throw('Guild ID not found');
+	return await toggleActivity(interaction.guildId) ? 'toggleOff' : 'toggleOn'
+}
+
+
 
 export const botInterfaces = {
 	close : new BotInterface()
@@ -41,7 +59,12 @@ export const botInterfaces = {
 		.addComponents( closeButtonActionRow )
 		.addEmbed(new EmbedBuilder()
 			.setTitle('Welcome to the settings editor')
-			.setDescription('First timers: check out the "Setup Wizard" section')
+			.setDescription('First timers: check out the "Setup Wizard" section'))
+		.addFunction( 'toggleMenu', async (interaction : StringSelectMenuInteraction) => {
+			if (interaction.guildId == null) throw('Guild ID not found');
+			if (await getActiveStatus(interaction.guildId)) return 'toggleOff';
+			return 'toggleOn';
+		}
 	),
 	
 	reset : new BotInterface()
@@ -73,9 +96,13 @@ export const botInterfaces = {
 				.setLabel('Cancel')))
 		.addComponents( closeButtonActionRow )
 		.addEmbed(new EmbedBuilder()
-		.setDescription("This will reset all your settings to the default values\n**Generally not recommended**")
-			.setTitle("Reset settings")
-	),
+		.setDescription("This will reset all your settings to the default values\n⚠️**Generally not recommended**⚠️")
+			.setTitle("Reset settings"))
+		.addFunction('resetSettings', (interaction : ButtonInteraction) => {
+				addGuildDB(interaction.guildId!, true);
+				return 'resetConfirmed';
+			}
+		),
 
 	resetConfirmed : new BotInterface()
 		.addComponents(new ActionRowBuilder<ButtonBuilder>()
@@ -87,14 +114,35 @@ export const botInterfaces = {
 		.addEmbed(new EmbedBuilder()
 			.setTitle('Settings have been reset to default')
 			.setDescription('Hit the back button to return to the settings menu')
+	),
+
+	toggleOff : new BotInterface()
+		.addComponents(new ActionRowBuilder<ButtonBuilder>()
+			.addComponents( new ButtonBuilder()
+				.setStyle(ButtonStyle.Danger)
+				.setEmoji('😴')
+				.setCustomId('toggleIt')
+			)
 		)
+		.addComponents(closeButtonActionRow)
+		.addEmbed( new EmbedBuilder()
+			.setTitle('Liofa is currently Turned on')
+			.setDescription('Hit the 😴 button to turn off liofa'))
+		.addFunction('toggleIt', toggleSwitch),
 
-}
+	toggleOn : new BotInterface()
+		.addComponents(new ActionRowBuilder<ButtonBuilder>()
+			.addComponents( new ButtonBuilder()
+				.setStyle(ButtonStyle.Success)
+				.setEmoji('🔔')
+				.setCustomId('toggleIt')
+			)
+		)
+		.addComponents(closeButtonActionRow)
+		.addEmbed( new EmbedBuilder()
+			.setTitle('Liofa is currently Turned off')
+			.setDescription('Hit the 🔔 button to turn on liofa')
+		)
+		.addFunction('toggleIt', toggleSwitch)
 
-// Scripts that return the next screen
-export const scripts = {
-	'resetSettings' : function (interaction : ButtonInteraction) {
-		addGuildDB(interaction.guildId!, true);
-		return 'resetConfirmed';
-	}
 }

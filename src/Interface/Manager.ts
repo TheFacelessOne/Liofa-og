@@ -31,9 +31,18 @@ export class BotInterface {
 	}
 
 	addEmbed(embededContent : EmbedBuilder) {
+		if (this.embeds) {
+			this.embeds.push(embededContent)
+			return this;
+		}
 		this.embeds = [embededContent];
 		return this;
 
+	}
+
+	addFunction(name : string, arrowFunction : Function) {
+		this.functions[name] = arrowFunction;
+		return this;
 	}
 }
 
@@ -44,7 +53,6 @@ export async function UIManager(
 
 	// All possible screens from this interface
 	screens : Record<string, BotInterface>,
-	scripts : Record<string, Function>,
 
 	// The first and last screens to show
 	startingScreen : keyof typeof screens, 
@@ -63,7 +71,7 @@ export async function UIManager(
 			if (screen === endingScreen) return;
 
 			// Waits for response from user
-			let interactionResponse = await message.awaitMessageComponent({ filter : i => i.user.id === interaction.user.id, time : 60_000 });
+			let interactionResponse = await message.awaitMessageComponent({ filter : i => i.user.id === interaction.user.id, time : 90_000 });
 
 			// Prevents an interaction failure message sent to user
 			interactionResponse.deferUpdate();
@@ -77,19 +85,15 @@ export async function UIManager(
 				interactionScriptRef = interactionResponse.customId
 			}
 
-			// If there's no script by the given name
-			// Takes you to the screen by that name instead
-			console.log(' ');
-			if (typeof scripts[interactionScriptRef] === 'undefined') {
-				startingScreen = interactionScriptRef;
+			// If there's a script by the given name associated with the current screen
+			if (typeof screens[screen].functions[interactionScriptRef] != 'undefined') {
+				
+				// runs the script
+				startingScreen = screens[screen].functions[interactionScriptRef](interaction);
 				continue;
 			}
-
-			// Runs the script if there is one
-			const interactionScript = scripts[interactionScriptRef];
-			console.log(interactionScriptRef, interactionScript)
-			interactionResponse.customId = interactionScript(interaction);
-			startingScreen = interactionResponse.customId
+				
+			startingScreen = interactionScriptRef;
 
 			// Checks next screen is valid
 		} while (Object.keys(screens).includes(startingScreen));
