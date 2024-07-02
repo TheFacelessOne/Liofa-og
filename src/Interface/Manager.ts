@@ -1,5 +1,5 @@
 // Class for user interfaces
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, CommandInteraction, Message, ButtonInteraction } from "discord.js";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, CommandInteraction, Message, ButtonInteraction, StringSelectMenuInteraction } from "discord.js";
 import { ErrorMessage, TimeOutMessage } from "./messages";
 
 // Designed to be used as interaction replies with ActionRowElements
@@ -49,7 +49,7 @@ export class BotInterface {
 // Once called, it will handle all interactions from that interface
 export async function UIManager(
 	// Interaction that generated the UI
-	interaction : CommandInteraction | ButtonInteraction,
+	interaction : CommandInteraction | ButtonInteraction | StringSelectMenuInteraction,
 
 	// All possible screens from this interface
 	screens : Record<string, BotInterface>,

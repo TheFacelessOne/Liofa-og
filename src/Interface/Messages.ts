@@ -4,12 +4,12 @@ export {
 	TimeOutMessage
 };
 
-import { ButtonBuilder, ButtonInteraction, CacheType, CommandInteraction, ComponentEmojiResolvable, EmbedBuilder } from "discord.js";
+import { ButtonBuilder, ButtonInteraction, CacheType, CommandInteraction, ComponentEmojiResolvable, EmbedBuilder, StringSelectMenuInteraction } from "discord.js";
 
 // Creates an error message for the user
 class ErrorMessage {
 
-	constructor(interaction : CommandInteraction<CacheType> | ButtonInteraction<CacheType>, errorCode : Number | String ) {
+	constructor(interaction : CommandInteraction<CacheType> | ButtonInteraction<CacheType> | StringSelectMenuInteraction<CacheType>, errorCode : Number | String ) {
 
 		// Errors if it can't respond
 		if (!interaction.isRepliable()) { throw("Error message failed, cannot reply to message error: " + errorCode) }
@@ -33,7 +33,7 @@ class ErrorMessage {
 
 class TimeOutMessage {
 
-	constructor(interaction : CommandInteraction<CacheType> | ButtonInteraction<CacheType>) {
+	constructor(interaction : CommandInteraction<CacheType> | ButtonInteraction<CacheType> | StringSelectMenuInteraction<CacheType>) {
 
 		// Errors if message is not repliable
 		if (!interaction.isRepliable()) { throw("Timeout message failed, cannot reply to message") }

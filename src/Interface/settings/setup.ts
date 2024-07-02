@@ -8,9 +8,10 @@ import {
 	StringSelectMenuInteraction, 
 	StringSelectMenuOptionBuilder
 } from "discord.js";
-import { BotInterface, UIManager } from "./manager";
-import { addGuildDB, getActiveStatus, toggleActivity } from "../database";
+import { BotInterface, UIManager } from "../manager";
+import { getActiveStatus, toggleActivity } from "../../database";
 import * as setupWiz from "./setupWizard";
+import * as reset from "./reset"
 
 
 
@@ -70,56 +71,15 @@ export const botInterfaces = {
 			if (interaction.guildId == null) throw('Guild ID not found');
 			if (await getActiveStatus(interaction.guildId)) return 'toggleOff';
 			return 'toggleOn';
+		})
+		.addFunction('setupWizard', async (interaction : StringSelectMenuInteraction) => {
+			await UIManager(interaction, setupWiz.botInterfaces, 'setupWizard');
+			return 'menu';
+		})
+		.addFunction( 'reset', async (interaction : StringSelectMenuInteraction) => {
+			await UIManager(interaction, reset.botInterfaces, 'reset')
+			return 'menu';
 		}
-	),
-	
-	reset : new BotInterface()
-		.addContent(' ')
-		.addComponents(new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(new ButtonBuilder()
-				.setStyle(ButtonStyle.Danger)
-				.setCustomId("confirmReset")
-				.setLabel('Reset Settings'))
-			.addComponents(new ButtonBuilder()
-				.setStyle(ButtonStyle.Primary)
-				.setCustomId("menu")
-				.setLabel('Back')))
-		.addComponents( closeButtonActionRow )
-		.addEmbed(new EmbedBuilder()
-		.setDescription("This will reset all your settings to the default values\n**Generally not recommended**")
-		.setTitle("Reset settings")
-	),
-	
-	confirmReset : new BotInterface()
-		.addComponents(new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(new ButtonBuilder()
-				.setStyle(ButtonStyle.Danger)
-				.setCustomId("resetSettings")
-				.setLabel('Confirm'))
-			.addComponents(new ButtonBuilder()
-				.setStyle(ButtonStyle.Primary)
-				.setCustomId("menu")
-				.setLabel('Cancel')))
-		.addComponents( closeButtonActionRow )
-		.addEmbed(new EmbedBuilder()
-		.setDescription("This will reset all your settings to the default values\n⚠️**Generally not recommended**⚠️")
-			.setTitle("Reset settings"))
-		.addFunction('resetSettings', (interaction : ButtonInteraction) => {
-				addGuildDB(interaction.guildId!, true);
-				return 'resetConfirmed';
-			}
-		),
-
-	resetConfirmed : new BotInterface()
-		.addComponents(new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(new ButtonBuilder()
-				.setStyle(ButtonStyle.Primary)
-				.setEmoji('🔙')
-				.setCustomId("menu")))
-		.addComponents( closeButtonActionRow )
-		.addEmbed(new EmbedBuilder()
-			.setTitle('Settings have been reset to default')
-			.setDescription('Hit the back button to return to the settings menu')
 	),
 
 	toggleOff : new BotInterface()
@@ -158,26 +118,5 @@ export const botInterfaces = {
 			.setDescription('Hit the 🔔 button to turn on liofa')
 		)
 		.addFunction('toggleIt', toggleSwitch),
-	
-	setupWizard : new BotInterface()
-		.addEmbed( new EmbedBuilder()
-			.setTitle('Let\'s get started!')
-			.setDescription('This will walk you through all the basic settings in Liofa for you to get the bot up and running.\n\nClick the start button to get started.'))
-		.addComponents(new ActionRowBuilder<ButtonBuilder>()
-			.addComponents( 
-				new ButtonBuilder()
-					.setStyle(ButtonStyle.Success)
-					.setCustomId('setupWizStart')
-					.setLabel('Start'),
-				new ButtonBuilder()
-					.setStyle(ButtonStyle.Primary)
-					.setCustomId("menu")
-					.setLabel('Back')
-				))
-		.addComponents(closeButtonActionRow)
-		.addFunction('setupWizStart', async (interaction : ButtonInteraction) => {
-			await UIManager(interaction, setupWiz.botInterfaces, 'start', 'end');
-			return 'setupWizard';
-		})
 
 }
