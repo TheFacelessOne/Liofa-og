@@ -68,8 +68,8 @@ export async function addGuildDB( guildRef : Guild["id"], overwrite? : boolean )
     }
 }
 
-export async function getGuildDB(id:string) {
-    return Guilds.findOne({guild_id : id});
+export async function getGuildDB(id:string) : Promise<GuildDBEntry | null> {
+    return <Promise<GuildDBEntry | null>> Guilds.findOne({guild_id : id});
 }
 
 export async function toggleActivity(id:string) {
