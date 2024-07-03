@@ -8,7 +8,7 @@ import {
 	StringSelectMenuInteraction, 
 	StringSelectMenuOptionBuilder
 } from "discord.js";
-import { BotInterface, UIManager } from "../manager";
+import { BotInterface, UIManager, UIManagerApprovedInteraction } from "../manager";
 import { getActiveStatus, toggleActivity } from "../../database";
 import * as setupWiz from "./setupWizard";
 import * as reset from "./reset"
@@ -54,69 +54,70 @@ const toggleSwitch = async (interaction : ButtonInteraction) => {
 
 
 
-export const botInterfaces = {
-	close : new BotInterface()
-		.addEmbed(new EmbedBuilder()
-			.setTitle('Bye 👋')
-			.setImage('https://gifdb.com/images/high/bobby-hill-closing-door-slowly-4agdaxkuh78jqjah.gif')
-	),
-	
-	menu : new BotInterface()
-		.addComponents( menuSelectActionRow )
-		.addComponents( closeButtonActionRow )
-		.addEmbed(new EmbedBuilder()
-			.setTitle('Welcome to the settings editor')
-			.setDescription('First timers: check out the "Setup Wizard" section'))
-		.addFunction( 'toggleMenu', async (interaction : StringSelectMenuInteraction) => {
-			if (interaction.guildId == null) throw('Guild ID not found');
-			if (await getActiveStatus(interaction.guildId)) return 'toggleOff';
-			return 'toggleOn';
-		})
-		.addFunction('setupWizard', async (interaction : StringSelectMenuInteraction) => {
-			await UIManager(interaction, setupWiz.botInterfaces, 'setupWizard');
-			return 'menu';
-		})
-		.addFunction( 'reset', async (interaction : StringSelectMenuInteraction) => {
-			await UIManager(interaction, reset.botInterfaces, 'reset')
-			return 'menu';
-		}
-	),
+export const botInterfaces = (interaction : UIManagerApprovedInteraction) => {
+	return {
+		close : new BotInterface()
+			.addEmbed(new EmbedBuilder()
+				.setTitle('Bye 👋')
+				.setImage('https://gifdb.com/images/high/bobby-hill-closing-door-slowly-4agdaxkuh78jqjah.gif')
+		),
+		
+		menu : new BotInterface()
+			.addComponents( menuSelectActionRow )
+			.addComponents( closeButtonActionRow )
+			.addEmbed(new EmbedBuilder()
+				.setTitle('Welcome to the settings editor')
+				.setDescription('First timers: check out the "Setup Wizard" section'))
+			.addFunction( 'toggleMenu', async (interaction : StringSelectMenuInteraction) => {
+				if (interaction.guildId == null) throw('Guild ID not found');
+				if (await getActiveStatus(interaction.guildId)) return 'toggleOff';
+				return 'toggleOn';
+			})
+			.addFunction('setupWizard', async (interaction : StringSelectMenuInteraction) => {
+				await UIManager(interaction, setupWiz.botInterfaces, 'setupWizard');
+				return 'menu';
+			})
+			.addFunction( 'reset', async (interaction : StringSelectMenuInteraction) => {
+				await UIManager(interaction, reset.botInterfaces, 'reset')
+				return 'menu';
+			}
+		),
 
-	toggleOff : new BotInterface()
-		.addComponents(new ActionRowBuilder<ButtonBuilder>()
-			.addComponents( new ButtonBuilder()
-				.setStyle(ButtonStyle.Danger)
-				.setEmoji('😴')
-				.setCustomId('toggleIt'),
-			new ButtonBuilder()
-				.setStyle(ButtonStyle.Primary)
-				.setCustomId("menu")
-				.setLabel('Back')
+		toggleOff : new BotInterface()
+			.addComponents(new ActionRowBuilder<ButtonBuilder>()
+				.addComponents( new ButtonBuilder()
+					.setStyle(ButtonStyle.Danger)
+					.setEmoji('😴')
+					.setCustomId('toggleIt'),
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Primary)
+					.setCustomId("menu")
+					.setLabel('Back')
+				)
 			)
-		)
-		.addComponents(closeButtonActionRow)
-		.addEmbed( new EmbedBuilder()
-			.setTitle('Liofa is currently Turned on')
-			.setDescription('Hit the 😴 button to turn off liofa'))
-		.addFunction('toggleIt', toggleSwitch),
+			.addComponents(closeButtonActionRow)
+			.addEmbed( new EmbedBuilder()
+				.setTitle('Liofa is currently Turned on')
+				.setDescription('Hit the 😴 button to turn off liofa'))
+			.addFunction('toggleIt', toggleSwitch),
 
-	toggleOn : new BotInterface()
-		.addComponents(new ActionRowBuilder<ButtonBuilder>()
-			.addComponents( new ButtonBuilder()
-				.setStyle(ButtonStyle.Success)
-				.setEmoji('🔔')
-				.setCustomId('toggleIt'),
-			new ButtonBuilder()
-				.setStyle(ButtonStyle.Primary)
-				.setCustomId("menu")
-				.setLabel('Back')
+		toggleOn : new BotInterface()
+			.addComponents(new ActionRowBuilder<ButtonBuilder>()
+				.addComponents( new ButtonBuilder()
+					.setStyle(ButtonStyle.Success)
+					.setEmoji('🔔')
+					.setCustomId('toggleIt'),
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Primary)
+					.setCustomId("menu")
+					.setLabel('Back')
+				)
 			)
-		)
-		.addComponents(closeButtonActionRow)
-		.addEmbed( new EmbedBuilder()
-			.setTitle('Liofa is currently Turned off')
-			.setDescription('Hit the 🔔 button to turn on liofa')
-		)
-		.addFunction('toggleIt', toggleSwitch),
-
+			.addComponents(closeButtonActionRow)
+			.addEmbed( new EmbedBuilder()
+				.setTitle('Liofa is currently Turned off')
+				.setDescription('Hit the 🔔 button to turn on liofa')
+			)
+			.addFunction('toggleIt', toggleSwitch),
+	}
 }

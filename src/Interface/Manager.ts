@@ -46,28 +46,38 @@ export class BotInterface {
 	}
 }
 
+export type UIManagerApprovedInteraction = CommandInteraction | ButtonInteraction | StringSelectMenuInteraction;
+
 // Once called, it will handle all interactions from that interface
 export async function UIManager(
 	// Interaction that generated the UI
-	interaction : CommandInteraction | ButtonInteraction | StringSelectMenuInteraction,
+	interaction : UIManagerApprovedInteraction,
 
 	// All possible screens from this interface
-	screens : Record<string, BotInterface>,
+	screensFunction : (interaction : UIManagerApprovedInteraction) => Record<string, BotInterface>,
 
 	// The first and last screens to show
-	startingScreen : keyof typeof screens | false, 
-	endingScreen? : keyof typeof screens
+	startingScreen : string| false, 
+	endingScreen? : string
 ) {	
 
 	let screen : string | false;
 	let message : Message<boolean>;
 
 	try {
+
+		// Load in all screens
+		const screens = screensFunction(interaction);
+
 		do {
-			// Loads in screen and sends it as a message
+
+			// Loads in screen
 			screen = startingScreen;
+
+			// Ends UIManager instances, useful for nested instances
 			if (screen === false) break;
 
+			// Sends screen by editing previous message
 			let ui = screens[screen].render();
 			message = await interaction.editReply(ui);
 			if (screen === endingScreen) return;
@@ -97,7 +107,7 @@ export async function UIManager(
 			// If there's a script by the given name associated with the current screen
 			if (typeof screens[screen].functions[interactionScriptRef] != 'undefined') {
 
-				console.log('running script: ' + interactionScriptRef + 'from screen: ' + screen)
+				console.log('running script: ' + interactionScriptRef + '\nfrom screen: ' + screen)
 				
 				// runs the script
 				// if it returns false, it will not change the screen and will end this UIManager instance
