@@ -4,7 +4,8 @@ export {
 	addGuildDB,
 	getGuildDB,
 	toggleActivity,
-	getActiveStatus
+	getActiveStatus,
+    setGuildDB
 }
 
 // Add a guild to the database with an optional overwrite parameter
@@ -35,6 +36,10 @@ async function addGuildDB( guildRef : Guild["id"], overwrite? : boolean ) {
 
 async function getGuildDB(id:string) : Promise<GuildDBEntry | null> {
     return <Promise<GuildDBEntry | null>> Guilds.findOne({guild_id : id});
+}
+
+async function setGuildDB(id:string, guildEntry : GuildDBEntry) : Promise<void> {
+    Guilds.replaceOne({ guild_id : id }, guildEntry)
 }
 
 // Turns liofa on or off in the specified server

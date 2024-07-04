@@ -1,5 +1,6 @@
 import { MongoClient, ObjectId } from 'mongodb';
 import * as dotenv from 'dotenv';
+import { setGuildDB } from './functions';
 dotenv.config()
 
 // Instantiate MongoDB client
@@ -27,16 +28,16 @@ export type GuildDBEntry = {
         whitelistedLanguages : string[],
     },
     _id? : ObjectId,
-    name? : string
+    name? : string,
+    update? : boolean
 } & Object
 
 // type for settings entry in templates collection
-type settingsTemplateType = { update? : boolean, name? : string } & GuildDBEntry
+type settingsTemplateType = { update : boolean, name : string } & GuildDBEntry
 
 // variables for settings template and Guilds collection
 export const Guilds = client.db(process.env.LIOFADB).collection('Guilds');
-export const settingsTemplate = <Promise<GuildDBEntry>> client.db(process.env.LIOFADB)
-    .collection('Templates')
+export const settingsTemplate = <Promise<GuildDBEntry>> client.db(process.env.LIOFADB).collection('Templates')
     .findOne({name : 'settings'}) 
     .then( (template) : settingsTemplateType => {
         if (template === null) {throw console.log('❌ Failed to load template')}
@@ -47,7 +48,7 @@ export const settingsTemplate = <Promise<GuildDBEntry>> client.db(process.env.LI
     })
     .then(async (template) => {
 
-        const copiedTemplate = { ...template };
+        const copiedTemplate = { ...template } as GuildDBEntry;
         
         // Tidy up the template so it looks more like a GuildDBEntry
         delete copiedTemplate._id;
@@ -55,30 +56,41 @@ export const settingsTemplate = <Promise<GuildDBEntry>> client.db(process.env.LI
         delete copiedTemplate.update;
 
         // If an update has been flagged on the template document
-        console.log(template.update ? 
-            await checkForUpdates(copiedTemplate) : '🟰  no database updates necessary' 
-        );
+        if (template.update) {
+
+            // Updates documents
+            console.log(await checkForUpdates(copiedTemplate));
+
+            // Resets update flag
+            template.update = false;
+            client.db(process.env.LIOFADB).collection('Templates')
+            .replaceOne({name : 'settings'}, template)
+            return template;
+        }
+        console.log('🟰  no database updates necessary');
         return template;
     })
 
 console.groupEnd();
 
-async function checkForUpdates( template : settingsTemplateType ) : Promise<string> {
+// Checks what entries need to be updated
+// Does not overide any values that are already set
+async function checkForUpdates( template : GuildDBEntry ) : Promise<string> {
     type objToUpdateType = Object & {
         [key: string]: any;
     };
 
-    delete template.update; // remove the update flag
-
     // Recursive function for adding missing entries to an object
     // Returns the new object as a promise
-    async function searchAdd(objToUpdate : objToUpdateType, template : Object) : Promise<Object> {
+    async function searchAdd(objToUpdate : objToUpdateType, template : Object) : Promise<Object | false> {
+        let somethingWasUpdated = false;
         for (const [key, value] of Object.entries(template)) {
 
             // If the key is missing
             // Updates the object with the missing entry
             if (!(key in objToUpdate)) {
                 objToUpdate[key] = value;
+                somethingWasUpdated = true;
                 continue;
             }
 
@@ -86,11 +98,20 @@ async function checkForUpdates( template : settingsTemplateType ) : Promise<stri
             // Searches the object for more missing entries
             // **Unsure how this interacts with arrays or other objects**
             if (typeof value === 'object') {
-                objToUpdate[key] = await searchAdd(objToUpdate[key], value)
+
+                const updatedObject = await searchAdd(objToUpdate[key], value);
+
+                if (updatedObject){
+                    somethingWasUpdated = true;
+                    objToUpdate[key] = updatedObject
+                }
+
             }
         }
+        
+        if (somethingWasUpdated) return objToUpdate;
 
-        return objToUpdate;
+        return false;
     }
 
     console.group('🆙 Updating database');
@@ -102,8 +123,13 @@ async function checkForUpdates( template : settingsTemplateType ) : Promise<stri
     const updates = allGuildInfo.map( 
         async ( guildDoc ) => {
             try {
-                await searchAdd(<objToUpdateType>guildDoc, template);
-                console.log('  ➡️  Updated: ' + (<GuildDBEntry>guildDoc).guild_id);
+                const newDoc = await searchAdd(<objToUpdateType>guildDoc, template);
+                if (newDoc) {
+                    setGuildDB((newDoc as GuildDBEntry).guild_id, newDoc as GuildDBEntry)
+                    console.log('  ➡️  Updated: ' + (guildDoc as GuildDBEntry).guild_id);
+                    return;
+                }
+                console.log('  ➡️  No Updates to: ' + (guildDoc as GuildDBEntry).guild_id);
             }
             catch {
                 throw console.error('update failed on: ' + (<GuildDBEntry>guildDoc).guild_id)
