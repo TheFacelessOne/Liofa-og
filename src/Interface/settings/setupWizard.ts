@@ -4,7 +4,8 @@ import {
 	ButtonStyle, 
 	EmbedBuilder, 
 } from "discord.js";
-import { BotInterface, UIManagerApprovedInteraction } from "../manager";
+import { BotInterface, UIManager, UIManagerApprovedInteraction } from "../manager";
+import * as approvedLanguages from "./approvedLanguages";
 
 const closeButtonActionRow = new ActionRowBuilder<ButtonBuilder>()
 .addComponents(new ButtonBuilder()
@@ -23,24 +24,16 @@ export const botInterfaces = (interaction : UIManagerApprovedInteraction) => {
 				.addComponents( 
 					new ButtonBuilder()
 						.setStyle(ButtonStyle.Success)
-						.setCustomId('start')
+						.setCustomId('approvedLanguages')
 						.setLabel('Start'),
 					))
 			.addComponents(closeButtonActionRow)
 			.addFunction('end', () => {
 				return false;
-			}
-		),
-
-
-		start : new BotInterface()
-			.addEmbed( new EmbedBuilder()
-				.setTitle('Welcome to the Setup Wizard!')
-				.setDescription('TODO'))
-			.addComponents( closeButtonActionRow )
-			.addFunction('end', () => {
-				return false;
-			}
-		),
-	}
+			})
+			.addFunction('approvedLanguages', async () => {
+				if (await UIManager(interaction, approvedLanguages.botInterfaces, '0') === false) return false;
+				return 'setupWizard' // replace with next screen
+			}),
+	} 
 }

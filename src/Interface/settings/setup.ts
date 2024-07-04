@@ -74,11 +74,11 @@ export const botInterfaces = (interaction : UIManagerApprovedInteraction) => {
 				return 'toggleOn';
 			})
 			.addFunction('setupWizard', async () => {
-				await UIManager(interaction, setupWiz.botInterfaces, 'setupWizard');
+				if (await UIManager(interaction, setupWiz.botInterfaces, 'setupWizard') === false) return false;
 				return 'menu';
 			})
 			.addFunction( 'reset', async () => {
-				await UIManager(interaction, reset.botInterfaces, 'reset')
+				if (await UIManager(interaction, reset.botInterfaces, 'reset') === false) return false;
 				return 'menu';
 			}
 		),

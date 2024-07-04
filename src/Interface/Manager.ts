@@ -89,10 +89,10 @@ export async function UIManager(
 				{ filter : i => i.user.id === interaction.user.id, time : 90_000 }
 			).catch(() => {
 				new TimeOutMessage(interaction)
-				return null;
+				return undefined;
 			});
 
-			if(interactionResponse === null) return;
+			if(interactionResponse === undefined) return false;
 
 			// Prevents an interaction failure message sent to user
 			interactionResponse.deferUpdate();
@@ -109,14 +109,12 @@ export async function UIManager(
 			// If there's a script by the given name associated with the current screen
 			if (typeof screens[screen].functions[interactionScriptRef] != 'undefined') {
 
-				console.log('running script: ' + interactionScriptRef + '\nfrom screen: ' + screen)
-				
 				// runs the script
 				// if it returns false, it will not change the screen and will end this UIManager instance
 				// this allows nested UIManager instances starting and ending from scripts
 				startingScreen = await screens[screen].functions[interactionScriptRef](interaction);
 
-				if(startingScreen === false) return;
+				if(startingScreen === false) return false;
 				continue;
 			}
 				
@@ -124,8 +122,9 @@ export async function UIManager(
 
 			// Checks next screen is valid
 		} while (Object.keys(screens).includes(startingScreen));
-
-		return new ErrorMessage(interaction, 'Attempted to access incompatible screen ' + startingScreen);
+		
+		new ErrorMessage(interaction, 'Attempted to access incompatible screen ' + startingScreen);
+		return false;
 
 	} catch (error) {
 		console.error(error);

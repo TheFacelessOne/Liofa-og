@@ -11,6 +11,7 @@ class ErrorMessage {
 
 	constructor(interaction : CommandInteraction<CacheType> | ButtonInteraction<CacheType> | StringSelectMenuInteraction<CacheType>, errorCode : Number | String ) {
 
+		console.error(errorCode);
 		// Errors if it can't respond
 		if (!interaction.isRepliable()) { throw("Error message failed, cannot reply to message error: " + errorCode) }
 
@@ -28,6 +29,8 @@ class ErrorMessage {
 		else {
 			interaction.reply({content : ' ', embeds : [errorResponse], components : []});
 		}
+
+		return false;
 	}
 }
 
@@ -52,6 +55,7 @@ class TimeOutMessage {
 		else {
 			interaction.reply({content : ' ', embeds : [timeoutResponse], components : []});
 		}
+		return false;
 	}
 
 }
