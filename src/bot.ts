@@ -4,7 +4,7 @@ import fs from 'fs';
 import { Client, ClientEvents, Collection, GatewayIntentBits, IntentsBitField, SlashCommandBuilder } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import { addGuildDB } from './database';
+import { addGuildDB } from './database/functions';
 dotenv.config();
 
 // What permissions the bot needs

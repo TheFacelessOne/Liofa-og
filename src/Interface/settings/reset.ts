@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ButtonInteraction } from "discord.js";
-import { addGuildDB } from "../../database";
+import { addGuildDB } from "../../database/functions";
 import { BotInterface, UIManagerApprovedInteraction } from "../manager";
 
 

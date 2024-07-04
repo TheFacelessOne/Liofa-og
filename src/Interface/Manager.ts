@@ -54,24 +54,26 @@ export async function UIManager(
 	interaction : UIManagerApprovedInteraction,
 
 	// All possible screens from this interface
-	screensFunction : (interaction : UIManagerApprovedInteraction) => Record<string, BotInterface>,
+	screensFunction : (interaction : UIManagerApprovedInteraction) => Record<string, BotInterface> | Promise<Record<string, BotInterface>>,
 
 	// The first and last screens to show
 	startingScreen : string| false, 
 	endingScreen? : string
-) {	
+) {	 
 
 	let screen : string | false;
 	let message : Message<boolean>;
 
 	try {
 
-		// Load in all screens
-		const screens = screensFunction(interaction);
+		let screens : Record<string, BotInterface>| Promise<Record<string, BotInterface>>
 
 		do {
 
-			// Loads in screen
+			// Load in all screens
+			screens = await screensFunction(interaction);
+
+			// Loads in new screen
 			screen = startingScreen;
 
 			// Ends UIManager instances, useful for nested instances

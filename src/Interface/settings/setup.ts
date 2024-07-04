@@ -9,9 +9,9 @@ import {
 	StringSelectMenuOptionBuilder
 } from "discord.js";
 import { BotInterface, UIManager, UIManagerApprovedInteraction } from "../manager";
-import { getActiveStatus, toggleActivity } from "../../database";
 import * as setupWiz from "./setupWizard";
 import * as reset from "./reset"
+import { toggleActivity, getActiveStatus } from "../../database/functions";
 
 
 
@@ -68,16 +68,16 @@ export const botInterfaces = (interaction : UIManagerApprovedInteraction) => {
 			.addEmbed(new EmbedBuilder()
 				.setTitle('Welcome to the settings editor')
 				.setDescription('First timers: check out the "Setup Wizard" section'))
-			.addFunction( 'toggleMenu', async (interaction : StringSelectMenuInteraction) => {
+			.addFunction( 'toggleMenu', async () => {
 				if (interaction.guildId == null) throw('Guild ID not found');
 				if (await getActiveStatus(interaction.guildId)) return 'toggleOff';
 				return 'toggleOn';
 			})
-			.addFunction('setupWizard', async (interaction : StringSelectMenuInteraction) => {
+			.addFunction('setupWizard', async () => {
 				await UIManager(interaction, setupWiz.botInterfaces, 'setupWizard');
 				return 'menu';
 			})
-			.addFunction( 'reset', async (interaction : StringSelectMenuInteraction) => {
+			.addFunction( 'reset', async () => {
 				await UIManager(interaction, reset.botInterfaces, 'reset')
 				return 'menu';
 			}
