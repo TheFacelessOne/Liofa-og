@@ -5,15 +5,15 @@ import * as ui from "../interface/settings/setup";
 
 
 export default {
-	data : new SlashCommandBuilder()
+	data: new SlashCommandBuilder()
 		.setName("setup")
 		.setDescription('Modify settings for liofa')
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-	ephemeral : true,
-	
-	execute(interaction : CommandInteraction) {
+	ephemeral: true,
+
+	execute(interaction: CommandInteraction) {
 		// Starts the UI manager
-		UIManager(interaction, ui.botInterfaces, 'menu', 'close');
+		UIManager(interaction, ui.botInterfaces, 'menu');
 
 	},
 }
