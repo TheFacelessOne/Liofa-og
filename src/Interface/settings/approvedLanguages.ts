@@ -1,227 +1,143 @@
 import { ActionRowBuilder, ButtonStyle, EmbedBuilder } from "discord.js"
-import { BotInterface, UIManagerApprovedInteraction } from "../manager"
+import { BotInterface, UIManagerApprovedInteraction, generateButtons } from "../manager"
 import { ButtonBuilder } from "@discordjs/builders"
 import { GuildDBEntry } from "../../database/initialize";
 import { ErrorMessage } from "../messages";
-import { getGuildDB } from "../../database/functions";
+import { getGuildDB, setGuildDB } from "../../database/functions";
+import { languageCodes, simplifiedList } from "../../utils.ts/cld3Languages";
 
-const languageList = {
-	"af": "Afrikaans",
-	"am": "Amharic",
-	"ar": "Arabic",
-	"bg": "Bulgarian",
-	"bg-Latn": "Bulgarian",
-	"bn": "Bangla",
-	"bs": "Bosnian",
-	"ca": "Catalan",
-	"ceb": "Cebuano",
-	"co": "Corsican",
-	"cs": "Czech",
-	"cy": "Welsh",
-	"da": "Danish",
-	"de": "German",
-	"el": "Greek",
-	"el-Latn": "Greek",
-	"en": "English",
-	"eo": "Esperanto",
-	"es": "Spanish",
-	"et": "Estonian",
-	"eu": "Basque",
-	"fa": "Persian",
-	"fi": "Finnish",
-	"fil": "Filipino",
-	"fr": "French",
-	"fy": "Western Frisian",
-	"ga": "Irish",
-	"gd": "Scottish Gaelic",
-	"gl": "Galician",
-	"gu": "Gujarati",
-	"ha": "Hausa",
-	"haw": "Hawaiian",
-	"hi": "Hindi",
-	"hi-Latn": "Hindi",
-	"hmn": "Hmong",
-	"hr": "Croatian",
-	"ht": "Haitian Creole",
-	"hu": "Hungarian",
-	"hy": "Armenian",
-	"id": "Indonesian",
-	"ig": "Igbo",
-	"is": "Icelandic",
-	"it": "Italian",
-	"iw": "Hebrew",
-	"ja": "Japanese",
-	"ja-Latn": "Japanese",
-	"jv": "Javanese",
-	"ka": "Georgian",
-	"kk": "Kazakh",
-	"km": "Khmer",
-	"kn": "Kannada",
-	"ko": "Korean",
-	"ku": "Kurdish",
-	"ky": "Kyrgyz",
-	"la": "Latin",
-	"lb": "Luxembourgish",
-	"lo": "Lao",
-	"lt": "Lithuanian",
-	"lv": "Latvian",
-	"mg": "Malagasy",
-	"mi": "Maori",
-	"mk": "Macedonian",
-	"ml": "Malayalam",
-	"mn": "Mongolian",
-	"mr": "Marathi",
-	"ms": "Malay",
-	"mt": "Maltese",
-	"my": "Burmese",
-	"ne": "Nepali",
-	"nl": "Dutch",
-	"no": "Norwegian",
-	"ny": "Nyanja",
-	"pa": "Punjabi",
-	"pl": "Polish",
-	"ps": "Pashto",
-	"pt": "Portuguese",
-	"ro": "Romanian",
-	"ru": "Russian",
-	"ru-Latn": "Russian",
-	"sd": "Sindhi",
-	"si": "Sinhala",
-	"sk": "Slovak",
-	"sl": "Slovenian",
-	"sm": "Samoan",
-	"sn": "Shona",
-	"so": "Somali",
-	"sq": "Albanian",
-	"sr": "Serbian",
-	"st": "Southern Sotho",
-	"su": "Sundanese",
-	"sv": "Swedish",
-	"sw": "Swahili",
-	"ta": "Tamil",
-	"te": "Telugu",
-	"tg": "Tajik",
-	"th": "Thai",
-	"tr": "Turkish",
-	"uk": "Ukrainian",
-	"ur": "Urdu",
-	"uz": "Uzbek",
-	"vi": "Vietnamese",
-	"xh": "Xhosa",
-	"yi": "Yiddish",
-	"yo": "Yoruba",
-	"zh": "Chinese Han",
-	"zh-Latn": "Chinese",
-	"zu": "Zulu"
-}
 
-type languageCodes = keyof typeof languageList;
+export type CustomCacheType = {
+	[key: string]
+	: Record<string, BotInterface>
+	| ButtonBuilder[]
+	| Record<string, Function>;
+};
 
-function generateEmbed(GuildInfo : GuildDBEntry) : EmbedBuilder {
+// Created a cache for this interface for efficiency purposes
+const cache: CustomCacheType = {};
 
+// Generates the embed for the approved languages screen
+async function generateEmbed(GuildInfo: GuildDBEntry): Promise<EmbedBuilder> {
+
+	// Title
 	const languageEmbed = new EmbedBuilder().setTitle('Approved Languages');
 
+	// If you have no approved languages
 	if (GuildInfo.settings.whitelistedLanguages.length === 0) {
-		languageEmbed.setDescription('No Languages are approved, **This is not recommended, your server will be spammed by this bot**')		
+		languageEmbed.setDescription('No Languages are approved\n**This is not recommended, your server will be spammed by this bot**')
 	}
 	else {
 
+		// Retrieve whitelist and create list
 		let whitelist = GuildInfo.settings.whitelistedLanguages as languageCodes[];
-
 		let whitelistMessage = '';
-		whitelist.map((element: languageCodes) => languageList[element]).forEach((element : string) => {
+		whitelist.map((element: languageCodes) => simplifiedList[element]).forEach((element: string) => {
 			whitelistMessage += element + '\n';
 		});
-		
-		languageEmbed.addFields(
-			{ name: 'Whitelisted Languages', value : whitelistMessage }
-		)
+
+		// Build embed
+		languageEmbed.setDescription('**Whitelisted Languages**\n' + whitelistMessage)
 	}
 
 	return languageEmbed;
 
 }
 
-function generateButtons() : ButtonBuilder[] {
 
-	let buttons : ButtonBuilder[] = []
-
-	for (const key in languageList) {
-
-		if (key.includes('Latn')) continue;
-		
-		buttons.push( 
-			new ButtonBuilder()
-			.setLabel(key)
-			.setCustomId('toggle ' + key)
-		)
-	}
-	return buttons;
-
-}
-
-const controlsRow = (pageNumber : number) => {
+// Creates the page controls at the top of the buttons
+const controlsRow = (pageNumber: number) => {
 	return new ActionRowBuilder<ButtonBuilder>()
-		.addComponents( 
-		new ButtonBuilder()
-			.setCustomId('pageLeft')
-			.setLabel('⬅️')
-			.setStyle(ButtonStyle.Primary),
-		new ButtonBuilder()
-			.setCustomId('pageRight')
-			.setLabel('➡️')
-			.setStyle(ButtonStyle.Primary),
-		new ButtonBuilder()
-			.setCustomId('page')
-			.setLabel(pageNumber.toString())
-			.setStyle(ButtonStyle.Secondary)
-			.setDisabled(true),
-		new ButtonBuilder()
-			.setCustomId('accept')
-			.setLabel('Accept')
-			.setStyle(ButtonStyle.Success),
-		new ButtonBuilder()
-			.setCustomId('end')
-			.setLabel('Exit')
-			.setStyle(ButtonStyle.Danger)
-	)
+		.addComponents(
+			new ButtonBuilder()
+				.setCustomId('pageLeft')
+				.setLabel('⬅️')
+				.setStyle(ButtonStyle.Primary),
+			new ButtonBuilder()
+				.setCustomId('pageRight')
+				.setLabel('➡️')
+				.setStyle(ButtonStyle.Primary),
+			new ButtonBuilder()
+				.setCustomId(pageNumber.toString())
+				.setLabel(pageNumber.toString())
+				.setStyle(ButtonStyle.Secondary)
+				.setDisabled(true),
+			new ButtonBuilder()
+				.setCustomId('accept')
+				.setLabel('Accept')
+				.setStyle(ButtonStyle.Success),
+			new ButtonBuilder()
+				.setCustomId('back')
+				.setLabel('Exit')
+				.setStyle(ButtonStyle.Danger)
+		)
 
 }
 
-type LanguageKey = keyof typeof languageList
+// Sorts the buttons alphabetically
+const sortButtons = (a: ButtonBuilder, b: ButtonBuilder) => {
+	if (a.data.label && b.data.label) {
+		return simplifiedList[a.data.label].localeCompare(simplifiedList[b.data.label]);
+	}
+	console.error('Tried to sort a button without a label');
+	return 1;
+}
 
-async function generatePages(interaction : UIManagerApprovedInteraction) : Promise<BotInterface[]> {
 
+// Checks if a language is whitelisted and colours the button accordingly
+const addButtonColours = (
+	button: ButtonBuilder,
+	whitelist: languageCodes[]
+): ButtonBuilder => {
+	if (!button.data.label) throw console.error('button label is undefined');
+
+	// Whitelisted languages get green buttons
+	if (whitelist.includes(button.data.label as languageCodes)) {
+		button.setStyle(ButtonStyle.Success);
+	}
+	else {
+		button.setStyle(ButtonStyle.Secondary);
+	}
+	// Changes the button label to the language name
+	button.setLabel(simplifiedList[button.data.label as languageCodes]);
+	return button;
+}
+
+
+// Creates all the possible pages within the approved languages screen
+async function generatePages(interaction: UIManagerApprovedInteraction): Promise<BotInterface[]> {
+
+	// Error checking
 	if (interaction.guildId === null) throw console.error('null guild ID');
 
+	// DB query and error checking
 	const GuildInfo = await getGuildDB(interaction.guildId);
-
 	if (GuildInfo === null) throw console.error('null GuildInfo');
 
-	const initializeButtons = generateButtons();
-	const allButtons = Array.from(initializeButtons);
+	// Make the embed for each BotInterface
+	const languageEmbed = generateEmbed(GuildInfo);
 
-	allButtons.map(( button : ButtonBuilder) => {
-		if ( button.data.label === undefined ) throw console.error('button label is undefined');
-		if (button.data.label === 'en' || button.data.label === 'English') console.log('this is supposed to be en :', button.data.label)
-		if ( GuildInfo.settings.whitelistedLanguages.includes(button.data.label) ){
-			button.setStyle(ButtonStyle.Success);
-		}
-		else {
-			button.setStyle(ButtonStyle.Secondary);
-		}
-		button.setLabel(languageList[button.data.label as LanguageKey] || button.data.label)
-		return button;
+	let allButtons: ButtonBuilder[] = await generateButtons(simplifiedList);
+
+	allButtons.sort(sortButtons);
+	allButtons.forEach((button) => {
+		return addButtonColours(
+			button,
+			GuildInfo.settings.whitelistedLanguages as languageCodes[]
+		)
 	});
 
-	const pages : BotInterface[] = [];
-	const actionRows : ActionRowBuilder<ButtonBuilder>[] = [];
+	// Variables for arrays of ActionRowBuilders and BotInterfaces
+	const pages: BotInterface[] = [];
+	const actionRows: ActionRowBuilder<ButtonBuilder>[] = [];
 
-	const languageEmbed = generateEmbed(GuildInfo);
-	
+	// Adds buttons to ActionRows in batches of 5
 	for (let buttonIndex = 0; buttonIndex < allButtons.length; buttonIndex += 5) {
+
+		// Init ActionRow
 		const currentRow = new ActionRowBuilder<ButtonBuilder>()
 
+		// Add at most 5 buttons to the ActionRow
 		let batchCounter = 0
 		for (let i = buttonIndex; allButtons[i] != undefined; i++) {
 			currentRow.addComponents(allButtons[i]);
@@ -229,20 +145,25 @@ async function generatePages(interaction : UIManagerApprovedInteraction) : Promi
 			if (batchCounter === 5) break;
 		}
 
+		// Add the ActionRow to an array
 		actionRows.push(currentRow);
 
 	}
 
+	// Adds ActionRows to BotInterfaces in batches of 4
 	for (let actionRowIndex = 0; actionRowIndex < actionRows.length; actionRowIndex += 4) {
 
+		const pageNumber = Math.ceil(actionRowIndex / 4) + 1;
+		// Init BotInterface
 		const currentPage = new BotInterface()
-		.addComponents(controlsRow(Math.ceil(actionRowIndex / 4) + 1 ))
-		.addContent(' ')
-		.addEmbed(languageEmbed)
-		.addFunction('back', () => {
-			return false;
-		})
+			.addComponents(controlsRow(pageNumber))
+			.addContent(' ')
+			.addEmbed(await languageEmbed)
+			.addFunction('back', () => {
+				return 'close';
+			})
 
+		// Adds at most 4 ActionRows to a BotInterface
 		let batchCounter = 0
 		for (let i = actionRowIndex; actionRows[i] != undefined; i++) {
 			currentPage.addComponents(actionRows[i]);
@@ -252,39 +173,97 @@ async function generatePages(interaction : UIManagerApprovedInteraction) : Promi
 		pages.push(currentPage);
 	}
 
+	// Adds page movement functions to each screen
 	for (let i = 0; i < pages.length; i++) {
 		pages[i]
-		.addFunction('pageLeft', () => {
-			let prevPage = (i - 1) % pages.length;
-			if (prevPage === -1) prevPage = pages.length - 1;
-			return prevPage.toString();
-		})
-		.addFunction('pageRight', () => {
-			let nextPage = ((i + 1) + pages.length % pages.length);
-			if (nextPage === pages.length) nextPage = 0;
-			return nextPage.toString();
-		})
+			.addFunction('pageLeft', () => {
+				let prevPage = (i - 1) % pages.length;
+				if (prevPage === -1) prevPage = pages.length - 1;
+				return prevPage.toString();
+			})
+			.addFunction('pageRight', () => {
+				let nextPage = ((i + 1) + pages.length % pages.length);
+				if (nextPage === pages.length) nextPage = 0;
+				return nextPage.toString();
+			});
 	}
 
 
 	return pages;
 }
-  
-
-export const botInterfaces = async ( interaction : UIManagerApprovedInteraction ) => { 
-
-	if ( interaction.guildId === null) throw new ErrorMessage(interaction, 'Tried to use an interaction with a null Guild ID');
-	let GuildInfo = await getGuildDB(interaction.guildId);
-	if ( GuildInfo === null || GuildInfo === undefined ) throw new ErrorMessage(interaction, 'Database returned null or undefined');
 
 
-	let pages = await generatePages(interaction);
 
-	let screens : Record<string, BotInterface> = {}
+// Creates the functions for each of the buttons
+async function generateButtonFunction(key: languageCodes, interaction: UIManagerApprovedInteraction, whitelistedLanguages: languageCodes[], GuildInfo: GuildDBEntry) {
 
+
+	if (!interaction) throw console.error('Tried to create a button with no interaction');
+	if (!interaction.guildId) throw console.error('Tried to create a button with no guild');
+
+
+	return async () => {
+
+		// Toggles the language in the whitelisted languages array
+		const existsAtPosition = whitelistedLanguages.indexOf(key);
+		if (existsAtPosition < 0) {
+			whitelistedLanguages.push(key);
+			setGuildDB(interaction.guildId!, GuildInfo);
+		}
+		else {
+			GuildInfo.settings.whitelistedLanguages.splice(existsAtPosition, 1)
+			setGuildDB(interaction.guildId!, GuildInfo);
+		}
+
+		// Clears the cache
+		if (cache[`approvedLanguagesScreens_${interaction.guildId}`]) {
+			delete cache[`approvedLanguagesScreens_${interaction.guildId}`];
+		}
+
+		const message = await interaction.fetchReply();
+		let currentPage: string;
+		try {
+			currentPage = message.components[0].components[2].customId as string;
+		}
+		catch {
+			currentPage = '1';
+		}
+		const pageNum = Number.parseInt(currentPage) - 1;
+		return pageNum.toString();
+	}
+}
+
+export const botInterfaces = async (interaction: UIManagerApprovedInteraction) => {
+
+	if (interaction.guildId === null) throw new ErrorMessage(interaction, 'Tried to use an interaction with a null Guild ID');
+	const GuildInfo = await getGuildDB(interaction.guildId);
+	if (GuildInfo === null || GuildInfo === undefined) throw new ErrorMessage(interaction, 'Database returned null or undefined');
+
+
+	const cacheKey = `approvedLanguagesScreens_${interaction.guildId}`;
+	let screens: Record<string, BotInterface> = {};
+
+	if (cache[cacheKey]) {
+		screens = cache[cacheKey] as Record<string, BotInterface>;
+		return { ...screens };
+	}
+
+	const pages = await generatePages(interaction);
 	for (let i = 0; i < pages.length; i++) {
 		screens[i] = pages[i];
+		for (const key in simplifiedList) {
+			screens[i].addFunction(
+				key,
+				await generateButtonFunction(
+					key as languageCodes,
+					interaction,
+					GuildInfo.settings.whitelistedLanguages as languageCodes[],
+					GuildInfo
+				)
+			)
+		}
 	}
-	
-	return { ...screens};
+	cache[cacheKey] = screens;
+
+	return { ...screens };
 }
