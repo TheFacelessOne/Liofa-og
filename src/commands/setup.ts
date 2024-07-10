@@ -1,7 +1,7 @@
 import { CommandInteraction } from "discord.js";
 import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
-import { UIManager } from "../interface/manager";
-import * as ui from "../interface/settings/setup";
+import { UIManager } from "../interfaces/manager";
+import * as ui from "../interfaces/settings/setup";
 
 
 export default {

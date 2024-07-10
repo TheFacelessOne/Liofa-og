@@ -4,7 +4,7 @@ import { ButtonBuilder } from "@discordjs/builders"
 import { GuildDBEntry } from "../../database/initialize";
 import { ErrorMessage } from "../messages";
 import { getGuildDB, setGuildDB } from "../../database/functions";
-import { languageCodes, simplifiedList } from "../../utils.ts/cld3Languages";
+import { languageCodes, simplifiedList } from "../../utils/cld3Languages";
 
 
 export type CustomCacheType = {
