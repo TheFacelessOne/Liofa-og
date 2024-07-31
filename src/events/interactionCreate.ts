@@ -1,5 +1,5 @@
 import { Events } from 'discord.js';
-import { Interaction } from 'discord.js';
+import type { Interaction } from 'discord.js';
 import { ErrorMessage } from '../interfaces/messages';
 
 export default {

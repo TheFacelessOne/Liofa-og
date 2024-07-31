@@ -3,6 +3,7 @@ declare namespace NodeJS {
 		DEVTOKEN: string;
 		DATABASE: string;
 		DEVCLIENTID: string;
+		LANGDETECTORPORT: string;
+
 	}
-  }
-  
+}

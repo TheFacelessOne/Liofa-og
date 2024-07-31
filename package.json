@@ -5,17 +5,23 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/bot.ts",
-    "start": "node dist/bot.js",
+    "start": "bun -b dist/bot.js",
     "build": "tsup src/bot.ts --minify"
   },
   "author": "THE_FACELESS_ONE",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "bun": "^1.1.21",
     "discord.js": "^14.15.2",
     "dotenv": "^16.4.5",
-    "mongodb": "^6.7.0"
+    "mongodb": "^6.7.0",
+    "python": "^0.0.4",
+    "pythonia": "^1.2.1"
   },
   "devDependencies": {
+    "@types/bun": "^1.1.6",
+    "@types/node": "^20.14.12",
+    "bun-types": "^1.1.21",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2",
     "tsx": "^4.11.0",
