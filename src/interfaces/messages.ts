@@ -1,15 +1,18 @@
 export {
 	ErrorMessage,
-	TimeOutMessage
+	TimeOutMessage,
+	LiofaResponse
 };
 
 import {
 	ButtonInteraction,
-	CacheType,
+	type CacheType,
 	CommandInteraction,
 	EmbedBuilder,
-	StringSelectMenuInteraction
+	StringSelectMenuInteraction,
 } from "discord.js";
+import type { GuildDBEntry } from "../database/initialize";
+import { BotInterface } from "../../dist/Interface/Manager";
 
 // Creates an error message for the user
 class ErrorMessage {
@@ -67,4 +70,36 @@ class TimeOutMessage {
 		return 'timeout';
 	}
 
+}
+
+class LiofaResponse extends BotInterface {
+	constructor(settings: GuildDBEntry["settings"]) {
+		super();
+
+		const responseEmbed = new EmbedBuilder;
+
+		responseEmbed.setAuthor({
+			name: "Liofa",
+			url: "https://github.com/TheFacelessOne/Liofa-Bot",
+			iconURL: "https://top.gg/_next/image?url=https%3A%2F%2Fimages.discordapp.net%2Favatars%2F866186816645890078%2Ff3b461b3e604bcf0619a47f50304dfc1.png%3Fsize%3D128&w=256&q=75",
+		});
+
+		responseEmbed.setTitle('Please speak x Language');
+
+		const showTranslatorLink = settings.appearance.translator;
+		if (showTranslatorLink) {
+			responseEmbed.setURL('https://translate.google.com/?sl=auto&tl=en&op=translate');
+		}
+
+		responseEmbed.setColor('Red');
+
+		responseEmbed.setFooter({
+			text: 'You have x warnings remaining'
+		})
+
+		const responseMessage = new BotInterface().addEmbed(responseEmbed)
+
+		return responseMessage;
+
+	}
 }

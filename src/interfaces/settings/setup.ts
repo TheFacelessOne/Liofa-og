@@ -7,7 +7,7 @@ import {
 	StringSelectMenuBuilder,
 	StringSelectMenuOptionBuilder
 } from "discord.js";
-import { BotInterface, UIManager, UIManagerApprovedInteraction } from "../manager";
+import { BotInterface, UIManager, type UIManagerApprovedInteraction } from "../manager";
 import * as setupWiz from "./setupWizard";
 import * as reset from "./reset"
 import { toggleActivity, getActiveStatus } from "../../database/functions";

@@ -99,7 +99,7 @@ client.login(token).then(() => {
 		}
 	}
 	detectLanguage('Bonjour, ca va?').then((result) => {
-		if (result === 'FR') {
+		if (result?.code === 'fr') {
 			return console.log('🔣 Languages loaded');
 		}
 		console.error('❌ Language detector failed')

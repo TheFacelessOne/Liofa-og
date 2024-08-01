@@ -22,34 +22,37 @@ main();
 
 // type for all database entries in the guild collection
 export type GuildDBEntry = {
-    guild_id : string,
-    settings : {
-        active : boolean,
-        whitelistedLanguages : string[],
+    guild_id: string,
+    settings: {
+        active: boolean,
+        whitelistedLanguages: string[],
+        appearance: {
+            translator: boolean
+        }
     },
-    _id? : ObjectId,
-    name? : string,
-    update? : boolean
+    _id?: ObjectId,
+    name?: string,
+    update?: boolean
 } & Object
 
 // type for settings entry in templates collection
-type settingsTemplateType = { update : boolean, name : string } & GuildDBEntry
+type settingsTemplateType = { update: boolean, name: string } & GuildDBEntry
 
 // variables for settings template and Guilds collection
-export const Guilds = client.db(process.env.LIOFADB).collection('Guilds');
-export const settingsTemplate = <Promise<GuildDBEntry>> client.db(process.env.LIOFADB).collection('Templates')
-    .findOne({name : 'settings'}) 
-    .then( (template) : settingsTemplateType => {
-        if (template === null) {throw console.log('❌ Failed to load template')}
+export const Guilds = client.db(process.env['LIOFADB']).collection('Guilds');
+export const settingsTemplate = <Promise<GuildDBEntry>>client.db(process.env['LIOFADB']).collection('Templates')
+    .findOne({ name: 'settings' })
+    .then((template): settingsTemplateType => {
+        if (template === null) { throw console.log('❌ Failed to load template') }
         console.log('📃 Settings template received');
-        
+
 
         return template as settingsTemplateType;
     })
     .then(async (template) => {
 
         const copiedTemplate = { ...template } as GuildDBEntry;
-        
+
         // Tidy up the template so it looks more like a GuildDBEntry
         delete copiedTemplate._id;
         delete copiedTemplate.name;
@@ -63,8 +66,8 @@ export const settingsTemplate = <Promise<GuildDBEntry>> client.db(process.env.LI
 
             // Resets update flag
             template.update = false;
-            client.db(process.env.LIOFADB).collection('Templates')
-            .replaceOne({name : 'settings'}, template)
+            client.db(process.env['LIOFADB']).collection('Templates')
+                .replaceOne({ name: 'settings' }, template)
             return template;
         }
         console.log('🟰  no database updates necessary');
@@ -75,14 +78,14 @@ console.groupEnd();
 
 // Checks what entries need to be updated
 // Does not overide any values that are already set
-async function checkForUpdates( template : GuildDBEntry ) : Promise<string> {
+async function checkForUpdates(template: GuildDBEntry): Promise<string> {
     type objToUpdateType = Object & {
         [key: string]: any;
     };
 
     // Recursive function for adding missing entries to an object
     // Returns the new object as a promise
-    async function searchAdd(objToUpdate : objToUpdateType, template : Object) : Promise<Object | false> {
+    async function searchAdd(objToUpdate: objToUpdateType, template: Object): Promise<Object | false> {
         let somethingWasUpdated = false;
         for (const [key, value] of Object.entries(template)) {
 
@@ -101,14 +104,14 @@ async function checkForUpdates( template : GuildDBEntry ) : Promise<string> {
 
                 const updatedObject = await searchAdd(objToUpdate[key], value);
 
-                if (updatedObject){
+                if (updatedObject) {
                     somethingWasUpdated = true;
                     objToUpdate[key] = updatedObject
                 }
 
             }
         }
-        
+
         if (somethingWasUpdated) return objToUpdate;
 
         return false;
@@ -120,8 +123,8 @@ async function checkForUpdates( template : GuildDBEntry ) : Promise<string> {
     const allGuildInfo = (await Guilds.find({}).toArray())
 
     // Updates documents
-    const updates = allGuildInfo.map( 
-        async ( guildDoc ) => {
+    const updates = allGuildInfo.map(
+        async (guildDoc) => {
             try {
                 const newDoc = await searchAdd(<objToUpdateType>guildDoc, template);
                 if (newDoc) {
