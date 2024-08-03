@@ -72,6 +72,7 @@ class TimeOutMessage {
 
 }
 
+// The Response message for when an unaccepted language is used
 class LiofaResponse extends BotInterface {
 	constructor(settings: GuildDBEntry["settings"]) {
 		super();

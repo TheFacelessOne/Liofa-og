@@ -1,10 +1,11 @@
 import { ActionRowBuilder, ButtonStyle, EmbedBuilder } from "discord.js"
-import { BotInterface, UIManagerApprovedInteraction, generateButtons } from "../manager"
+import { BotInterface, type UIManagerApprovedInteraction, generateButtons } from "../manager"
 import { ButtonBuilder } from "@discordjs/builders"
-import { GuildDBEntry } from "../../database/initialize";
+import type { GuildDBEntry } from "../../database/initialize";
 import { ErrorMessage } from "../messages";
 import { getGuildDB, setGuildDB } from "../../database/functions";
-import { languageCodes, simplifiedList } from "../../utils/cld3Languages";
+import { languageList } from "../../utils/languages";
+type ISO639_1_CODE = keyof typeof languageList;
 
 
 export type CustomCacheType = {
@@ -30,11 +31,14 @@ async function generateEmbed(GuildInfo: GuildDBEntry): Promise<EmbedBuilder> {
 	else {
 
 		// Retrieve whitelist and create list
-		let whitelist = GuildInfo.settings.whitelistedLanguages as languageCodes[];
+		let whitelist = GuildInfo.settings.whitelistedLanguages as ISO639_1_CODE[];
 		let whitelistMessage = '';
-		whitelist.map((element: languageCodes) => simplifiedList[element]).forEach((element: string) => {
-			whitelistMessage += element + '\n';
-		});
+
+		// Adds all elements of the array to the message
+		whitelist.map((whitelistISOcode: ISO639_1_CODE) => {
+			whitelistMessage += languageList[whitelistISOcode].name + '\n';
+		})
+
 
 		// Build embed
 		languageEmbed.setDescription('**Whitelisted Languages**\n' + whitelistMessage)
@@ -76,8 +80,10 @@ const controlsRow = (pageNumber: number) => {
 
 // Sorts the buttons alphabetically
 const sortButtons = (a: ButtonBuilder, b: ButtonBuilder) => {
-	if (a.data.label && b.data.label) {
-		return simplifiedList[a.data.label].localeCompare(simplifiedList[b.data.label]);
+	const languageCodeA = <ISO639_1_CODE>a.data.label;
+	const languageCodeB = <ISO639_1_CODE>b.data.label;
+	if (typeof languageCodeA != 'undefined' && typeof languageCodeB != 'undefined') {
+		return languageList[languageCodeA].name.localeCompare(languageList[languageCodeB].name)
 	}
 	console.error('Tried to sort a button without a label');
 	return 1;
@@ -87,19 +93,19 @@ const sortButtons = (a: ButtonBuilder, b: ButtonBuilder) => {
 // Checks if a language is whitelisted and colours the button accordingly
 const addButtonColours = (
 	button: ButtonBuilder,
-	whitelist: languageCodes[]
+	whitelist: ISO639_1_CODE[]
 ): ButtonBuilder => {
 	if (!button.data.label) throw console.error('button label is undefined');
 
 	// Whitelisted languages get green buttons
-	if (whitelist.includes(button.data.label as languageCodes)) {
+	if (whitelist.includes(button.data.label as ISO639_1_CODE)) {
 		button.setStyle(ButtonStyle.Success);
 	}
 	else {
 		button.setStyle(ButtonStyle.Secondary);
 	}
 	// Changes the button label to the language name
-	button.setLabel(simplifiedList[button.data.label as languageCodes]);
+	button.setLabel(languageList[button.data.label as ISO639_1_CODE].name);
 	return button;
 }
 
@@ -117,13 +123,13 @@ async function generatePages(interaction: UIManagerApprovedInteraction): Promise
 	// Make the embed for each BotInterface
 	const languageEmbed = generateEmbed(GuildInfo);
 
-	let allButtons: ButtonBuilder[] = await generateButtons(simplifiedList);
+	let allButtons: ButtonBuilder[] = await generateButtons(languageList);
 
 	allButtons.sort(sortButtons);
 	allButtons.forEach((button) => {
 		return addButtonColours(
 			button,
-			GuildInfo.settings.whitelistedLanguages as languageCodes[]
+			GuildInfo.settings.whitelistedLanguages as ISO639_1_CODE[]
 		)
 	});
 
@@ -194,8 +200,8 @@ async function generatePages(interaction: UIManagerApprovedInteraction): Promise
 
 
 
-// Creates the functions for each of the buttons
-async function generateButtonFunction(key: languageCodes, interaction: UIManagerApprovedInteraction, whitelistedLanguages: languageCodes[], GuildInfo: GuildDBEntry) {
+// Creates the functions for each of the language buttons
+async function generateButtonFunction(key: ISO639_1_CODE, interaction: UIManagerApprovedInteraction, whitelistedLanguages: ISO639_1_CODE[], GuildInfo: GuildDBEntry) {
 
 
 	if (!interaction) throw console.error('Tried to create a button with no interaction');
@@ -220,6 +226,7 @@ async function generateButtonFunction(key: languageCodes, interaction: UIManager
 			delete cache[`approvedLanguagesScreens_${interaction.guildId}`];
 		}
 
+		// Gets the current page number based on the button's label
 		const message = await interaction.fetchReply();
 		let currentPage: string;
 		try {
@@ -228,41 +235,50 @@ async function generateButtonFunction(key: languageCodes, interaction: UIManager
 		catch {
 			currentPage = '1';
 		}
+
+		// returns the current page number
 		const pageNum = Number.parseInt(currentPage) - 1;
 		return pageNum.toString();
 	}
 }
 
+// Generates interfaces for approvedLanguages Screens
 export const botInterfaces = async (interaction: UIManagerApprovedInteraction) => {
 
+	// Get Guild information
 	if (interaction.guildId === null) throw new ErrorMessage(interaction, 'Tried to use an interaction with a null Guild ID');
 	const GuildInfo = await getGuildDB(interaction.guildId);
 	if (GuildInfo === null || GuildInfo === undefined) throw new ErrorMessage(interaction, 'Database returned null or undefined');
 
 
+	// Starts a cache so screens do not need to be recreated every time
 	const cacheKey = `approvedLanguagesScreens_${interaction.guildId}`;
 	let screens: Record<string, BotInterface> = {};
 
+	// Loads from cache if present
 	if (cache[cacheKey]) {
 		screens = cache[cacheKey] as Record<string, BotInterface>;
 		return { ...screens };
 	}
 
+	// Generates all the pages of languages
 	const pages = await generatePages(interaction);
 	for (let i = 0; i < pages.length; i++) {
 		screens[i] = pages[i];
-		for (const key in simplifiedList) {
+		for (const key in languageList) {
 			screens[i].addFunction(
 				key,
 				await generateButtonFunction(
-					key as languageCodes,
+					key as ISO639_1_CODE,
 					interaction,
-					GuildInfo.settings.whitelistedLanguages as languageCodes[],
+					GuildInfo.settings.whitelistedLanguages as ISO639_1_CODE[],
 					GuildInfo
 				)
 			)
 		}
 	}
+
+	// Caches generated pages
 	cache[cacheKey] = screens;
 
 	return { ...screens };

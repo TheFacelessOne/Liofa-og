@@ -4,7 +4,7 @@ import {
 	ButtonStyle,
 	EmbedBuilder,
 } from "discord.js";
-import { BotInterface, UIManager, UIManagerApprovedInteraction } from "../manager";
+import { BotInterface, UIManager, type UIManagerApprovedInteraction } from "../manager";
 import * as approvedLanguages from "./approvedLanguages";
 
 const closeButtonActionRow = new ActionRowBuilder<ButtonBuilder>()

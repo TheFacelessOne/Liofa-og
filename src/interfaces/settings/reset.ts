@@ -1,6 +1,6 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ButtonInteraction } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
 import { addGuildDB } from "../../database/functions";
-import { BotInterface, UIManagerApprovedInteraction } from "../manager";
+import { BotInterface, type UIManagerApprovedInteraction } from "../manager";
 
 
 // Close button for menu
@@ -42,7 +42,7 @@ export const botInterfaces = (interaction: UIManagerApprovedInteraction) => {
 			.addEmbed(new EmbedBuilder()
 				.setDescription("This will reset all your settings to the default values\n⚠️**Generally not recommended**⚠️")
 				.setTitle("Reset settings"))
-			.addFunction('resetSettings', (interaction: ButtonInteraction) => {
+			.addFunction('resetSettings', () => {
 				addGuildDB(interaction.guildId!, true);
 				return 'resetConfirmed';
 			}
