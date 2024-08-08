@@ -13,6 +13,8 @@ import {
 } from "discord.js";
 import type { GuildDBEntry } from "../database/initialize";
 import { BotInterface } from "../../dist/Interface/Manager";
+import { languageList } from "../utils/languages";
+import { sentence } from "../utils/translated";
 
 // Creates an error message for the user
 class ErrorMessage {
@@ -72,33 +74,61 @@ class TimeOutMessage {
 
 }
 
+
 // The Response message for when an unaccepted language is used
 class LiofaResponse extends BotInterface {
-	constructor(settings: GuildDBEntry["settings"]) {
+	constructor(
+		settings: GuildDBEntry["settings"],
+		spokenLanguage: keyof typeof languageList,
+		avatar: string | null
+
+	) {
 		super();
 
 		const responseEmbed = new EmbedBuilder;
 
-		responseEmbed.setAuthor({
-			name: "Liofa",
-			url: "https://github.com/TheFacelessOne/Liofa-Bot",
-			iconURL: "https://top.gg/_next/image?url=https%3A%2F%2Fimages.discordapp.net%2Favatars%2F866186816645890078%2Ff3b461b3e604bcf0619a47f50304dfc1.png%3Fsize%3D128&w=256&q=75",
-		});
+		// responseEmbed.setAuthor({
+		// 	name: "Liofa",
+		// 	url: "https://github.com/TheFacelessOne/Liofa-Bot",
+		// 	iconURL: "https://images.discordapp.net/avatars/866186816645890078/f3b461b3e604bcf0619a47f50304dfc1.png",
+		// });
 
-		responseEmbed.setTitle('Please speak x Language');
+		responseEmbed.setTitle(sentence[spokenLanguage]);
+
+		const namingConvention = settings.appearance.nativeName ? 'nativeName' : 'name';
+
+		const formatLanguageList = () => {
+			let formattedList = '';
+			for (const language of settings.whitelistedLanguages) {
+				let preferred = false;
+				if (language === settings.whitelistedLanguages[0]) {
+					preferred = true;
+					formattedList += '**'
+				}
+				formattedList += languageList[<typeof spokenLanguage>language][namingConvention] + '\n';
+				formattedList += preferred ? '**' : '';
+			}
+			return formattedList;
+		}
+		responseEmbed.setDescription(formatLanguageList());
+
+		if (settings.appearance.showUserAvatar) {
+			responseEmbed.setThumbnail(avatar);
+		}
 
 		const showTranslatorLink = settings.appearance.translator;
 		if (showTranslatorLink) {
-			responseEmbed.setURL('https://translate.google.com/?sl=auto&tl=en&op=translate');
+			responseEmbed.setURL(`https://translate.google.com/?sl=auto&tl=${settings.whitelistedLanguages[0]}&op=translate`);
 		}
 
-		responseEmbed.setColor('Red');
+		responseEmbed.setColor('Red'); // Change based on warning level
 
-		responseEmbed.setFooter({
-			text: 'You have x warnings remaining'
-		})
+		// responseEmbed.setFooter({
+		// 	text: 'You have x warnings remaining'
+		// })
 
 		const responseMessage = new BotInterface().addEmbed(responseEmbed)
+
 
 		return responseMessage;
 

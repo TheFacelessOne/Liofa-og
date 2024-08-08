@@ -27,7 +27,9 @@ export type GuildDBEntry = {
         active: boolean,
         whitelistedLanguages: string[],
         appearance: {
-            translator: boolean
+            translator: boolean,
+            nativeName: boolean,
+            showUserAvatar: boolean
         }
     },
     _id?: ObjectId,
