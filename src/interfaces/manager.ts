@@ -1,6 +1,6 @@
 // Class for user interfaces
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, CommandInteraction, Message, ButtonInteraction, StringSelectMenuInteraction } from "discord.js";
-import { ErrorMessage, TimeOutMessage } from "./messages";
+import { TimeOutMessage } from "./messages";
 
 // Designed to be used as interaction replies with ActionRowElements
 export class BotInterface {
@@ -65,7 +65,7 @@ export async function UIManager(
 
 	// The first and last screens to show
 	startingScreen: string | false
-) {
+): Promise<false | string> {
 
 	let screen: string | false;
 	let message: Message<boolean>;
@@ -103,7 +103,7 @@ export async function UIManager(
 			interactionResponse.deferUpdate();
 
 			// Correctly assigns input value from selectMenus and buttons
-			let interactionScriptRef: string;
+			let interactionScriptRef: string | false;
 			if (interactionResponse.isStringSelectMenu()) {
 				interactionScriptRef = interactionResponse.values[0]
 			}
@@ -112,15 +112,14 @@ export async function UIManager(
 			}
 
 			// If there's a script by the given name associated with the current screen
-			if (typeof screens[screen].functions[interactionScriptRef] != 'undefined') {
+			while (typeof screens[screen].functions[interactionScriptRef] != 'undefined') {
 
 				// runs the script
 				// if it returns false, it will not change the screen and will end this UIManager instance
 				// this allows nested UIManager instances starting and ending from scripts
-				startingScreen = await screens[screen].functions[interactionScriptRef](interaction);
+				interactionScriptRef = await screens[screen].functions[interactionScriptRef](interaction);
 
-				if (startingScreen === false) return false;
-				continue;
+				if (interactionScriptRef === false) return false;
 			}
 
 			startingScreen = interactionScriptRef;
@@ -133,12 +132,14 @@ export async function UIManager(
 			return false;
 		}
 
-		new ErrorMessage(interaction, 'Attempted to access incompatible screen ' + startingScreen);
-		return false;
+		// If it's not another interface
+		// and it's not a function
+		// return the string to what called the UIManager
+		return startingScreen;
 
 	} catch (error) {
 		console.error(error);
-		return;
+		return false;
 	}
 }
 

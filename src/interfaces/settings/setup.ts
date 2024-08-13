@@ -12,6 +12,7 @@ import * as setupWiz from "./setupWizard";
 import * as reset from "./reset"
 import { toggleActivity, getActiveStatus } from "../../database/functions";
 import * as approvedLanguages from "./approvedLanguages";
+import * as appearance from "./appearance";
 
 
 
@@ -29,7 +30,7 @@ const menuSelectActionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
 			new StringSelectMenuOptionBuilder()
 				.setLabel('Toggle Liofa') // TODO: change label / description / emoji based on liofa's status
 				.setDescription('Turn liofa off or on')
-				.setValue('toggleMenu') // TODO make toggle page
+				.setValue('toggleMenu')
 				.setEmoji('⚡'),
 			new StringSelectMenuOptionBuilder()
 				.setLabel('Reset')
@@ -41,6 +42,11 @@ const menuSelectActionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
 				.setDescription('Choose which languages liofa allows')
 				.setValue('approvedLanguages')
 				.setEmoji('🤬'),
+			new StringSelectMenuOptionBuilder()
+				.setLabel('Appearance')
+				.setDescription('Change what liofa\'s messages look like')
+				.setValue('appearance')
+				.setEmoji('🎨')
 		)
 	);
 
@@ -82,6 +88,11 @@ export const botInterfaces = (interaction: UIManagerApprovedInteraction) => {
 			})
 			.addFunction('approvedLanguages', async () => {
 				if (await UIManager(interaction, approvedLanguages.botInterfaces, '0') === false) return false;
+				return 'menu'
+			})
+			.addFunction('appearance', async () => {
+				if (await UIManager(interaction, appearance.botInterfaces, 'preview') === false) return false;
+				return 'menu'
 			}),
 
 		toggleOff: new BotInterface()

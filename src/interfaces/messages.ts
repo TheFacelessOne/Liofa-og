@@ -12,7 +12,7 @@ import {
 	StringSelectMenuInteraction,
 } from "discord.js";
 import type { GuildDBEntry } from "../database/initialize";
-import { BotInterface } from "../../dist/Interface/Manager";
+import { BotInterface } from "./manager"
 import { languageList } from "../utils/languages";
 import { sentence } from "../utils/translated";
 

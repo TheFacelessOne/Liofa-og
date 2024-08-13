@@ -1,6 +1,7 @@
 import { MongoClient, ObjectId } from 'mongodb';
 import * as dotenv from 'dotenv';
 import { setGuildDB } from './functions';
+import type { languageCodes } from '../utils/languages';
 dotenv.config()
 
 // Instantiate MongoDB client
@@ -25,7 +26,7 @@ export type GuildDBEntry = {
     guild_id: string,
     settings: {
         active: boolean,
-        whitelistedLanguages: string[],
+        whitelistedLanguages: languageCodes[],
         appearance: {
             translator: boolean,
             nativeName: boolean,

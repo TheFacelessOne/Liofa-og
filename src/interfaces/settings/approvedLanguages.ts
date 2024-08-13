@@ -182,6 +182,9 @@ async function generatePages(interaction: UIManagerApprovedInteraction): Promise
 	// Adds page movement functions to each screen
 	for (let i = 0; i < pages.length; i++) {
 		pages[i]
+			.addFunction('accept', () => {
+				return;
+			})
 			.addFunction('pageLeft', () => {
 				let prevPage = (i - 1) % pages.length;
 				if (prevPage === -1) prevPage = pages.length - 1;
