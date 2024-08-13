@@ -10,45 +10,47 @@ import {
 import { BotInterface, UIManager, type UIManagerApprovedInteraction } from "../manager";
 import * as setupWiz from "./setupWizard";
 import * as reset from "./reset"
-import { toggleActivity, getActiveStatus } from "../../database/functions";
+import { toggleActivity, getActiveStatus, getGuildDB } from "../../database/functions";
 import * as approvedLanguages from "./approvedLanguages";
 import * as appearance from "./appearance";
 
 
 
 // Select menu for settings pages
-const menuSelectActionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
-	.addComponents(new StringSelectMenuBuilder()
-		.setPlaceholder('Choose a setting to edit')
-		.setCustomId('menu selector')
-		.addOptions(
-			new StringSelectMenuOptionBuilder()
-				.setLabel('Setup Wizard')
-				.setDescription('Walks you through setting up Liofa')
-				.setValue('setupWizard')
-				.setEmoji('🧙‍♂️'),
-			new StringSelectMenuOptionBuilder()
-				.setLabel('Toggle Liofa') // TODO: change label / description / emoji based on liofa's status
-				.setDescription('Turn liofa off or on')
-				.setValue('toggleMenu')
-				.setEmoji('⚡'),
-			new StringSelectMenuOptionBuilder()
-				.setLabel('Reset')
-				.setDescription('Reset settings to default')
-				.setValue('reset')
-				.setEmoji('⚠️'),
-			new StringSelectMenuOptionBuilder()
-				.setLabel('Approved Languages')
-				.setDescription('Choose which languages liofa allows')
-				.setValue('approvedLanguages')
-				.setEmoji('🤬'),
-			new StringSelectMenuOptionBuilder()
-				.setLabel('Appearance')
-				.setDescription('Change what liofa\'s messages look like')
-				.setValue('appearance')
-				.setEmoji('🎨')
-		)
-	);
+const menuSelectActionRow = (liofaIsEnabled: boolean) => {
+	return new ActionRowBuilder<StringSelectMenuBuilder>()
+		.addComponents(new StringSelectMenuBuilder()
+			.setPlaceholder('Choose a setting to edit')
+			.setCustomId('menu selector')
+			.addOptions(
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Setup Wizard')
+					.setDescription('Walks you through setting up Liofa')
+					.setValue('setupWizard')
+					.setEmoji('🧙‍♂️'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel(liofaIsEnabled ? 'Turn Liofa off' : 'Turn Liofa on') // TODO: change label / description / emoji based on liofa's status
+					.setDescription('Turn liofa off or on')
+					.setValue('toggleMenu')
+					.setEmoji(liofaIsEnabled ? '❌' : '✅'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Reset')
+					.setDescription('Reset settings to default')
+					.setValue('reset')
+					.setEmoji('⚠️'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Approved Languages')
+					.setDescription('Choose which languages liofa allows')
+					.setValue('approvedLanguages')
+					.setEmoji('🤬'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Appearance')
+					.setDescription('Change what liofa\'s messages look like')
+					.setValue('appearance')
+					.setEmoji('🎨')
+			)
+		);
+}
 
 // Close button for menu
 const closeButtonActionRow = new ActionRowBuilder<ButtonBuilder>()
@@ -64,11 +66,15 @@ const toggleSwitch = async (interaction: ButtonInteraction) => {
 }
 
 
-export const botInterfaces = (interaction: UIManagerApprovedInteraction) => {
+export const botInterfaces = async (interaction: UIManagerApprovedInteraction) => {
+	if (!interaction.guildId) throw 'No interaction given';
+	const guildData = await getGuildDB(interaction.guildId);
+	const activityStatus = guildData?.settings.active;
+	if (typeof activityStatus === 'undefined') throw 'No activity status given';
 	return {
 
 		menu: new BotInterface()
-			.addComponents(menuSelectActionRow)
+			.addComponents(menuSelectActionRow(activityStatus))
 			.addComponents(closeButtonActionRow)
 			.addEmbed(new EmbedBuilder()
 				.setTitle('Welcome to the settings editor')
